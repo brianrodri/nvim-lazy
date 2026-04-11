@@ -41,10 +41,6 @@ require("lazy").setup({
     version = "*",
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  checker = {
-    enabled = true, -- check for plugin updates periodically
-    notify = false, -- notify on update
-  }, -- automatically check for plugin updates
   performance = {
     rtp = {
       -- disable some rtp plugins
