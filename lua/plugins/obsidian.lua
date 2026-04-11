@@ -5,6 +5,7 @@ local my_vault = require("my.vault")
 return {
   {
     "obsidian-nvim/obsidian.nvim",
+    commit = "f81691",
     dependencies = { "nvim-lua/plenary.nvim" },
     opts = {
       workspaces = { my_vault:into_workspace() },

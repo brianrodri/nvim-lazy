@@ -8,6 +8,8 @@
 ---@field bookmark obsidian.Note|?
 local Vault = {}
 
+local H = {}
+
 ---@return my.Vault
 function Vault.new(name, root, opts)
   local self = setmetatable({}, { __index = Vault })
@@ -99,14 +101,50 @@ end
 
 ---@param bufnr? integer
 function Vault:make_broader_note(bufnr)
-  local note = require("obsidian.note").from_buffer(bufnr)
-  -- TODO
+  local broader_note, backlink_line = H.insert_note_link(bufnr, "Broader", "Narrower")
+  if not broader_note then return end
+  broader_note:open({ line = backlink_line, col = 3 })
 end
 
 ---@param bufnr? integer
 function Vault:make_narrower_note(bufnr)
-  local note = require("obsidian.note").from_buffer(bufnr)
-  -- TODO
+  local narrower_note, backlink_line = H.insert_note_link(bufnr, "Narrower", "Broader")
+  if not narrower_note then return end
+  narrower_note:open({ line = backlink_line, col = 3 })
+end
+
+---@param bufnr? integer
+---@param header string
+---@param inv_header string
+---@return obsidian.Note? note
+---@return integer? backlink_line
+function H.insert_note_link(bufnr, header, inv_header)
+  local note_src = require("obsidian.api").current_note(bufnr)
+  if not note_src then return end
+  local note_dst =
+    require("obsidian.note").create({ id = require("obsidian.api").input("Note Id (optional):") }):write({
+      template = Obsidian.opts.note.template,
+      check_buffers = true,
+      update_content = function(lines)
+        return vim.list_extend(lines, { "", "## " .. inv_header, "", "- " .. note_src:format_link() })
+      end,
+    })
+  H.push_location_onto_tagstack(
+    note_src.id,
+    note_src:insert_text("- " .. note_dst:format_link(), { section = { header = header, level = 2 } })
+  )
+  return note_dst, (note_dst.has_frontmatter and note_dst.frontmatter_end_line or 0) + 4
+end
+
+---@param tagname string
+---@param line_num integer
+function H.push_location_onto_tagstack(tagname, line_num)
+  if line_num == 0 then return end
+  local buf = vim.api.nvim_get_current_buf()
+  local col = 3
+  local off = 0
+  local new_item = { tagname = tagname, from = { buf, line_num, col, off } }
+  vim.fn.settagstack(vim.fn.win_getid(), { items = { new_item } }, "t")
 end
 
 return Vault.new("My Vault", "~/Vault", {
