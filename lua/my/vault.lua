@@ -17,8 +17,9 @@ end
 
 ---@return boolean? enabled
 function M.obsidian_is_enabled()
-  local dir_stat = vim.uv.fs_stat(vim.fs.normalize(D.ROOT_DIR))
-  return dir_stat and dir_stat.type == "directory"
+  local root_dir = vim.fs.normalize(D.ROOT_DIR)
+  local fs_stat = vim.uv.fs_stat(root_dir)
+  return fs_stat and fs_stat.type == "directory"
 end
 
 ---@type obsidian.workspace.WorkspaceSpec

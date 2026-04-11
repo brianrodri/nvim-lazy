@@ -9,7 +9,7 @@ return {
     ---@type obsidian.config
     opts = {
       workspaces = { my_vault.obsidian_workspace },
-      ui = { enable = false },
+      ui = { enable = false }, ---@type obsidian.config.UIOpts|{}
     },
 
     config = my_vault.obsidian_config,
