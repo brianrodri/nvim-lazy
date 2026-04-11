@@ -39,35 +39,22 @@ M.obsidian_opts = {
   },
 }
 
----@type LazyKeysSpec[]
-M.obsidian_keys = {
-  { "<leader>vn", ":Obsidian new<cr>", desc = "New Note", silent = true },
-  { "<leader>vs", ":Obsidian search<cr>", desc = "Search Notes", silent = true },
-  { "<leader>vf", ":Obsidian quick_switch<cr>", desc = "Find Note", silent = true },
-  { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian", silent = true },
-  { "<leader>vv", H.open_pinned_note, desc = "Open Pinned Note", silent = true },
-  { "<leader>va", H.append_to_pinned_note, desc = "Append To Pinned Note", silent = true },
-  { "<leader>vp", H.pick_pinned_note, desc = "Pin/Unpin Note", silent = true },
-  { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract to Note", silent = true, mode = { "n", "v" } },
-  { "<leader>vt", ":Obsidian today<cr>", desc = "Today's Note", silent = true },
-  { "<leader>vr", H.pick_recent_note, desc = "Recent Notes" },
-}
-
 ---@param args vim.api.keyset.create_autocmd.callback_args
 ---@return boolean? delete_after
 function H.on_obsidian_note_entered(args)
   -- TODO
 end
 
-function H.open_pinned_note() end
+function M.open_pinned_note() end
 
-function H.append_to_pinned_note() end
+function M.append_to_pinned_note() end
 
-function H.pick_pinned_note() end
+function M.pick_pinned_note() end
 
-function H.pick_recent_note() end
+function M.pick_recent_note() end
 
---- @param base_id? string
+---@param base_id? string
+---@return string
 function H.note_id_func(base_id)
   local id_components = vim.split(base_id or "", "[^A-Za-z0-9-_.]")
   table.insert(id_components, 1, os.date("%s"))
