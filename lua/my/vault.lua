@@ -22,7 +22,7 @@ function M.obsidian_is_enabled()
 end
 
 ---@type obsidian.workspace.WorkspaceSpec
-M.obsidian_opts = {
+M.obsidian_workspace = {
   name = D.VAULT_NAME,
   path = D.ROOT_DIR,
   ---@type obsidian.config|{}
