@@ -6,25 +6,35 @@ return {
   {
     "obsidian-nvim/obsidian.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
-    ---@type obsidian.config
     opts = {
-      workspaces = { my_vault.obsidian_workspace },
-      ui = { enable = false }, ---@type obsidian.config.UIOpts|{}
+      workspaces = { my_vault:into_workspace() },
+      ui = { enable = false },
     },
-
-    config = my_vault.obsidian_config,
-    enabled = my_vault.obsidian_is_enabled(),
+    config = function(_, opts)
+      require("obsidian").setup(opts)
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "ObsidianNoteEnter",
+        callback = function(args)
+          require("which-key").add({
+            { "<leader>vb", function() my_vault:pick_bookmark(args.buf, false) end, desc = "Pick Bookmark" },
+            { "<leader>vj", function() my_vault:make_narrower_note(args.buf) end, desc = "Make Narrower Note" },
+            { "<leader>vk", function() my_vault:make_broader_note(args.buf) end, desc = "Make Broader Note" },
+          }, { buf = args.buf })
+        end,
+      })
+    end,
+    enabled = function() return my_vault:exists() end,
     keys = {
       { "<leader>vn", ":Obsidian new<cr>", desc = "New Note", silent = true },
+      { "<leader>vN", ":Obsidian new<cr><cr>", desc = "New Note", silent = true },
       { "<leader>vs", ":Obsidian search<cr>", desc = "Search Notes", silent = true },
       { "<leader>vf", ":Obsidian quick_switch<cr>", desc = "Find Note", silent = true },
       { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian", silent = true },
-      { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract to Note", silent = true, mode = { "n", "v" } },
+      { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract to Note", mode = { "n", "v" }, silent = true },
       { "<leader>vt", ":Obsidian today<cr>", desc = "Today's Note", silent = true },
-      { "<leader>vr", my_vault.pick_recent_note, desc = "Recent Notes" },
-      { "<leader>vv", my_vault.open_pinned_note, desc = "Open Pinned Note", silent = true },
-      { "<leader>va", my_vault.append_to_pinned_note, desc = "Append To Pinned Note", silent = true },
-      { "<leader>vp", my_vault.pick_pinned_note, desc = "Pin/Unpin Note", silent = true },
+      { "<leader>vr", function() my_vault:pick_recent_note() end, desc = "Recent Notes", silent = true },
+      { "<leader>vv", function() my_vault:open_bookmark() end, desc = "Open Bookmark", silent = true },
+      { "<leader>va", function() my_vault:append_to_bookmark() end, desc = "Append To Bookmark", silent = true },
     },
   },
 }
