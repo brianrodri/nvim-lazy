@@ -6,7 +6,7 @@ return {
   {
     "obsidian-nvim/obsidian.nvim",
     commit = "f816915e0bf2f60f44d23a5e3d59658fa8a20094",
-    dependencies = { "nvim-lua/plenary.nvim" },
+    dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
     opts = {
       workspaces = { my_vault.into_workspace() },
       ui = { enable = false },

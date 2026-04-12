@@ -29,11 +29,8 @@ function M.make_narrower_note(bufnr) H.make_bidi_link(bufnr, "Narrower", "Broade
 local Vault = {}
 Vault.__index = Vault
 
----@param opts? my.Vault|{}
-function Vault.new(opts)
-  opts = opts or {}
-  return getmetatable(opts) == Vault and opts or setmetatable(opts, Vault)
-end
+---@param opts my.Vault
+function Vault.new(opts) return getmetatable(opts) == Vault and opts or setmetatable(opts, Vault) end
 
 function Vault:enabled()
   local stat = vim.uv.fs_stat(vim.fs.normalize(self.root))
@@ -49,7 +46,7 @@ function Vault:into_workspace()
     overrides = {
       daily_notes = { folder = self.daily_notes_folder, workdays_only = false, default_tags = {} },
       attachments = { folder = self.attachments_folder },
-      frontmatter = { enabled = function(path) return vim.fs.dirname(path) == self.fleeting_notes_folder end },
+      frontmatter = { enabled = function(rel_path) return vim.fs.dirname(rel_path) == self.fleeting_notes_folder end },
       ---@diagnostic disable-next-line: missing-fields
       templates = { folder = self.templates_folder },
       notes_subdir = self.fleeting_notes_folder,
@@ -80,7 +77,7 @@ function Vault:pick_bookmark(bufnr, callback)
   else
     obsidian_picker.find_files({
       prompt_title = "Pick Bookmark",
-      callback = function(p) self:set_bookmarked(obsidian_note.from_file(p), callback) end,
+      callback = function(path) self:set_bookmarked(obsidian_note.from_file(path), callback) end,
     })
   end
 end
@@ -123,7 +120,7 @@ end
 
 ---@param id? string
 function H.note_id_func(id)
-  id = vim.trim(string.format("%s %s", os.date("%s"), id or ""))
+  id = vim.trim(string.format("%s %s", os.time(), id or ""))
   return vim.iter(string.gmatch(id, "([A-Za-z0-9]+)")):map(string.lower):join("-")
 end
 
