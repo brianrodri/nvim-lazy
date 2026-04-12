@@ -193,11 +193,12 @@ end
 ---@return table<K, V>
 function H.assert_types(tbl, expected_types)
   local errors = {}
-  for key, val in pairs(tbl or {}) do
-    if type(val) ~= expected_types[key] then
-      table.insert(errors, C.WRONG_TYPE_FMT:format(key, vim.inspect(val), expected_types[key]))
+  for key, expected in pairs(expected_types) do
+    if type(tbl[key]) ~= expected then
+      table.insert(errors, C.WRONG_TYPE_FMT:format(key, vim.inspect(tbl[key]), expected_types[key]))
     end
   end
+  table.sort(errors)
   assert(#errors == 0, vim.iter(errors):join("\n"))
   return tbl
 end
