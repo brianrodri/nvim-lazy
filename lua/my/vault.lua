@@ -147,14 +147,14 @@ function H.make_bidi_link(bufnr, fwd, rev)
   new_note:open({ line = 4 + (new_note.frontmatter_end_line or 0), col = 3 })
 end
 
----@param tagname string
----@param line_num number
+---@param tagname? string
+---@param line_num? number
 function H.push_location_onto_tagstack(tagname, line_num)
-  if line_num == 0 then return end
+  if type(line_num) ~= "number" or line_num <= 0 then return end
   local buf = vim.api.nvim_get_current_buf()
   local col = 3
   local off = 0
-  local new_item = { tagname = tagname, from = { buf, line_num, col, off } }
+  local new_item = { tagname = tostring(tagname), from = { buf, line_num, col, off } }
   vim.fn.settagstack(vim.fn.win_getid(), { items = { new_item } }, "t")
 end
 
