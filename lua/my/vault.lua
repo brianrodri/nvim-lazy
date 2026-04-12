@@ -1,24 +1,22 @@
-local H = {} --- HELPERS
-local C = {} --- CONSTANTS
+local M = {} --- MY API
+local H = {} --- MY HELPERS
+local C = {} --- MY CONSTANTS
 
---- MY VAULT API
-local API = {}
+function M.is_enabled() return C.PRIMARY_VAULT:enabled() end
 
-function API.is_enabled() return C.PRIMARY_VAULT:enabled() end
+function M.into_workspace() return C.PRIMARY_VAULT:into_workspace() end
 
-function API.into_workspace() return C.PRIMARY_VAULT:into_workspace() end
+function M.open_bookmark() C.PRIMARY_VAULT:open_bookmark() end
 
-function API.open_bookmark() C.PRIMARY_VAULT:open_bookmark() end
+function M.pick_bookmark() C.PRIMARY_VAULT:pick_bookmark(0) end
 
-function API.pick_bookmark() C.PRIMARY_VAULT:pick_bookmark(0) end
+function M.append_to_bookmark() C.PRIMARY_VAULT:append_to_bookmark() end
 
-function API.append_to_bookmark() C.PRIMARY_VAULT:append_to_bookmark() end
+function M.pick_recent_note() C.PRIMARY_VAULT:pick_recent_note() end
 
-function API.pick_recent_note() C.PRIMARY_VAULT:pick_recent_note() end
+function M.make_broader_note(bufnr) H.make_bidi_link(bufnr, "Broader", "Narrower") end
 
-function API.make_broader_note(bufnr) H.make_bidi_link(bufnr, "Broader", "Narrower") end
-
-function API.make_narrower_note(bufnr) H.make_bidi_link(bufnr, "Narrower", "Broader") end
+function M.make_narrower_note(bufnr) H.make_bidi_link(bufnr, "Narrower", "Broader") end
 
 ---@class my.Vault - MY VAULT CLASS
 ---@field name string
@@ -38,9 +36,9 @@ function Vault.new(opts)
 end
 
 function Vault:enabled()
-  local obsidian_path = require("obsidian.path")
-
-  return obsidian_path.new(vim.fs.normalize(self.root)):is_dir()
+  local root = vim.fs.normalize(vim.fn.expand(self.root))
+  local stat = vim.uv.fs_stat(root)
+  return stat ~= nil and stat.type == "directory"
 end
 
 function Vault:into_workspace()
@@ -187,4 +185,4 @@ C.PRIMARY_VAULT = Vault.new({
 --- EOF
 --------
 
-return API
+return M
