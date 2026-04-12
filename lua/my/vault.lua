@@ -31,7 +31,6 @@ end
 ---@field templates_folder string
 
 ---@class my.Vault : my.VaultOpts
----@field real_root string
 ---@field bookmark? obsidian.Note
 local Vault = {}
 Vault.__index = Vault
@@ -48,13 +47,13 @@ function Vault.new(opts)
     templates_folder = "string",
   })
   local self = setmetatable(opts, Vault)
-  self.real_root = vim.fs.normalize(opts.root)
+  self.root = vim.fs.normalize(opts.root)
   self.bookmark = nil
   return self
 end
 
 function Vault:exists()
-  local stat = vim.uv.fs_stat(self.real_root)
+  local stat = vim.uv.fs_stat(self.root)
   return stat and stat.type == "directory"
 end
 
@@ -62,7 +61,7 @@ function Vault:get_workspace_spec()
   ---@type obsidian.workspace.WorkspaceSpec
   return {
     name = self.name,
-    path = self.real_root,
+    path = self.root,
     ---@diagnostic disable-next-line: missing-fields
     overrides = {
       daily_notes = { folder = self.daily_notes_folder, workdays_only = false, default_tags = {} },
@@ -80,7 +79,7 @@ end
 function Vault:pick_recent_note()
   local snacks_picker = require("snacks.picker")
 
-  snacks_picker.recent({ filter = { cwd = self.real_root } })
+  snacks_picker.recent({ filter = { cwd = self.root } })
 end
 
 ---@param bufnr? number
