@@ -78,7 +78,7 @@ return {
             { icon = "󰝒 ", key = "n", desc = "New File",        action = ":enew"                           },
             { icon = "󰱼 ", key = "f", desc = "Find File",       action = "<leader>ff"                      },
             { icon = "󱎸 ", key = "s", desc = "Search Text",     action = "<leader>sg"                      },
-            { icon = " ", key = "v", desc = "Open Daily Note", action = "<leader>vv"                      },
+            { icon = " ", key = "v", desc = "Open Daily Note", action = "<leader>vt"                      },
             { icon = " ", key = "g", desc = "Lazygit",         action = "<leader>gg"                      },
             { icon = "󰒲 ", key = "l", desc = "Lazy",            action = "<leader>ll"                      },
             { icon = " ", key = "q", desc = "Quit",            action = "<leader>qq"                      },
