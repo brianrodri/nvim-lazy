@@ -5,7 +5,7 @@ local my_vault = require("my.vault")
 return {
   {
     "obsidian-nvim/obsidian.nvim",
-    commit = "f81691",
+    commit = "f816915e0bf2f60f44d23a5e3d59658fa8a20094",
     dependencies = { "nvim-lua/plenary.nvim" },
     opts = {
       workspaces = { my_vault.into_workspace() },
@@ -16,6 +16,7 @@ return {
     config = function(_, opts)
       require("obsidian").setup(opts)
       vim.api.nvim_create_autocmd("User", {
+        group = vim.api.nvim_create_augroup("MyObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
           require("which-key").add({

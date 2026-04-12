@@ -36,9 +36,8 @@ function Vault.new(opts)
 end
 
 function Vault:enabled()
-  local root = vim.fs.normalize(vim.fn.expand(self.root))
-  local stat = vim.uv.fs_stat(root)
-  return stat ~= nil and stat.type == "directory"
+  local stat = vim.uv.fs_stat(vim.fs.normalize(self.root))
+  return stat and stat.type == "directory"
 end
 
 function Vault:into_workspace()
@@ -79,7 +78,7 @@ function Vault:pick_bookmark(bufnr, callback)
   elseif buf_note then
     self:set_bookmarked(buf_note, callback)
   else
-    pcall(obsidian_picker.find_files, {
+    obsidian_picker.find_files({
       prompt_title = "Pick Bookmark",
       callback = function(p) self:set_bookmarked(obsidian_note.from_file(p), callback) end,
     })
@@ -109,14 +108,13 @@ end
 function Vault:is_bookmarked(note) return self.bookmark and note and tostring(self.bookmark.path) == tostring(note.path) end
 
 ---@param note? obsidian.Note
----@param on_changed? fun(new_bookmark?: obsidian.Note, old_bookmark?: obsidian.Note): ...
+---@param on_changed? fun()
 function Vault:set_bookmarked(note, on_changed)
   if note == nil and self.bookmark == nil then return end
   if note ~= nil and self.bookmark ~= nil and tostring(note.path) == tostring(self.bookmark.path) then return end
-  local old_bookmark = self.bookmark
   self.bookmark = note
   print(self.bookmark and string.format("Bookmark set to '%s'", self.bookmark.path) or "Bookmark unset")
-  if on_changed then on_changed(self.bookmark, old_bookmark) end
+  if on_changed then on_changed() end
 end
 
 ------------
@@ -125,13 +123,8 @@ end
 
 ---@param id? string
 function H.note_id_func(id)
-  id = string.format("%s_%s", os.date("%s"), id or "")
-  return vim
-    .iter(string.gmatch(id, "[A-Za-z0-9%s-_\\.]+"))
-    :map(function(s) return string.gsub(s, "[%s-_\\.]+", "") end)
-    :filter(function(s) return string.len(s) > 0 end)
-    :map(string.lower)
-    :join("-")
+  id = vim.trim(string.format("%s %s", os.date("%s"), id or ""))
+  return vim.iter(string.gmatch(id, "([A-Za-z0-9]+)")):map(string.lower):join("-")
 end
 
 ---@param bufnr? number
