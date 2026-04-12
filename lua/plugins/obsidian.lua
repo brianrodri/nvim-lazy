@@ -34,7 +34,7 @@ return {
       { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian", silent = true },
       { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract to Note", mode = { "n", "v" }, silent = true },
       { "<leader>vt", ":Obsidian today<cr>", desc = "Today's Note", silent = true },
-      { "<leader>vb", my_vault.pick_bookmark, desc = "Pick Bookmark" },
+      { "<leader>vp", my_vault.pick_bookmark, desc = "Pick Bookmark" },
       { "<leader>vr", my_vault.pick_recent_note, desc = "Recent Notes", silent = true },
       { "<leader>vv", my_vault.open_bookmark, desc = "Open Bookmark", silent = true },
       { "<leader>va", my_vault.append_to_bookmark, desc = "Append To Bookmark", silent = true },
