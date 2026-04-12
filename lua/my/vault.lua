@@ -2,9 +2,9 @@ local M = {} --- MY API
 local H = {} --- MY HELPERS
 local C = {} --- MY CONSTANTS
 
-function M.is_enabled() return C.PRIMARY_VAULT:enabled() end
+function M.is_enabled() return C.PRIMARY_VAULT:exists() end
 
-function M.into_workspace() return C.PRIMARY_VAULT:into_workspace() end
+function M.get_workspace_spec() return C.PRIMARY_VAULT:get_workspace_spec() end
 
 function M.open_bookmark() C.PRIMARY_VAULT:open_bookmark() end
 
@@ -14,34 +14,55 @@ function M.append_to_bookmark() C.PRIMARY_VAULT:append_to_bookmark() end
 
 function M.pick_recent_note() C.PRIMARY_VAULT:pick_recent_note() end
 
-function M.make_broader_note(bufnr) H.make_bidi_link(bufnr, "Broader", "Narrower") end
+function M.make_broader_note(bufnr)
+  H.insert_bidi_link(require("obsidian.api").current_note(bufnr), "Broader", "Narrower")
+end
 
-function M.make_narrower_note(bufnr) H.make_bidi_link(bufnr, "Narrower", "Broader") end
+function M.make_narrower_note(bufnr)
+  H.insert_bidi_link(require("obsidian.api").current_note(bufnr), "Narrower", "Broader")
+end
 
----@class my.Vault - MY VAULT CLASS
+---@class my.VaultOpts
 ---@field name string
 ---@field root string
 ---@field fleeting_notes_folder string
 ---@field daily_notes_folder string
 ---@field attachments_folder string
 ---@field templates_folder string
+
+---@class my.Vault : my.VaultOpts
+---@field real_root string
 ---@field bookmark? obsidian.Note
 local Vault = {}
 Vault.__index = Vault
 
----@param opts my.Vault
-function Vault.new(opts) return getmetatable(opts) == Vault and opts or setmetatable(opts, Vault) end
+---@param opts? my.VaultOpts
+function Vault.new(opts)
+  if getmetatable(opts) == Vault then return opts end
+  opts = H.assert_types(opts or {}, {
+    name = "string",
+    root = "string",
+    fleeting_notes_folder = "string",
+    daily_notes_folder = "string",
+    attachments_folder = "string",
+    templates_folder = "string",
+  })
+  local self = setmetatable(opts, Vault)
+  self.real_root = vim.fs.normalize(opts.root)
+  self.bookmark = nil
+  return self
+end
 
-function Vault:enabled()
-  local stat = vim.uv.fs_stat(vim.fs.normalize(self.root))
+function Vault:exists()
+  local stat = vim.uv.fs_stat(self.real_root)
   return stat and stat.type == "directory"
 end
 
-function Vault:into_workspace()
+function Vault:get_workspace_spec()
   ---@type obsidian.workspace.WorkspaceSpec
   return {
     name = self.name,
-    path = self.root,
+    path = self.real_root,
     ---@diagnostic disable-next-line: missing-fields
     overrides = {
       daily_notes = { folder = self.daily_notes_folder, workdays_only = false, default_tags = {} },
@@ -59,7 +80,7 @@ end
 function Vault:pick_recent_note()
   local snacks_picker = require("snacks.picker")
 
-  snacks_picker.recent({ filter = { cwd = self.root } })
+  snacks_picker.recent({ filter = { cwd = self.real_root } })
 end
 
 ---@param bufnr? number
@@ -70,15 +91,15 @@ function Vault:pick_bookmark(bufnr, callback)
   local obsidian_picker = require("obsidian.picker")
 
   local buf_note = obsidian_api.current_note(bufnr)
-  if self:is_bookmarked(buf_note) then
-    self:set_bookmarked(nil, callback)
-  elseif buf_note then
-    self:set_bookmarked(buf_note, callback)
-  else
+  if not buf_note then
     obsidian_picker.find_files({
       prompt_title = "Pick Bookmark",
       callback = function(path) self:set_bookmarked(obsidian_note.from_file(path), callback) end,
     })
+  elseif not H.is_same_note(buf_note, self.bookmark) then
+    self:set_bookmarked(buf_note, callback)
+  else
+    self:set_bookmarked(nil, callback)
   end
 end
 
@@ -102,15 +123,11 @@ function Vault:append_to_bookmark()
 end
 
 ---@param note? obsidian.Note
-function Vault:is_bookmarked(note) return self.bookmark and note and tostring(self.bookmark.path) == tostring(note.path) end
-
----@param note? obsidian.Note
 ---@param on_changed? fun()
 function Vault:set_bookmarked(note, on_changed)
-  if note == nil and self.bookmark == nil then return end
-  if note ~= nil and self.bookmark ~= nil and tostring(note.path) == tostring(self.bookmark.path) then return end
+  if H.is_same_note(note, self.bookmark) then return end
   self.bookmark = note
-  print(self.bookmark and string.format("Bookmark set to '%s'", self.bookmark.path) or "Bookmark unset")
+  print(self.bookmark and C.BOOKMARK_SET_FMT:format(self.bookmark.path) or C.BOOKMARK_UNSET_MSG)
   if on_changed then on_changed() end
 end
 
@@ -124,38 +141,66 @@ function H.note_id_func(id)
   return vim.iter(string.gmatch(id, "([A-Za-z0-9]+)")):map(string.lower):join("-")
 end
 
----@param bufnr? number
+---@param src_note? obsidian.Note
 ---@param fwd string
 ---@param rev string
-function H.make_bidi_link(bufnr, fwd, rev)
+function H.insert_bidi_link(src_note, fwd, rev)
   local obsidian_api = require("obsidian.api")
   local obsidian_note = require("obsidian.note")
 
-  local buf_note = obsidian_api.current_note(bufnr)
-  if not buf_note then return end
-
-  local new_note = obsidian_note.create({ id = obsidian_api.input("ID (optional):") }):write({
+  if not src_note then return end
+  local new_note = obsidian_note.create({
+    id = obsidian_api.input("ID?:"),
     template = Obsidian.opts.note.template,
-    update_content = function(lines)
-      return vim.list_extend(lines, { "", "## " .. rev, "", "- " .. buf_note:format_link() })
+    should_write = true,
+  })
+
+  local src_note_link = C.LINK_FMT:format(src_note:format_link())
+  local new_note_link = C.LINK_FMT:format(new_note:format_link())
+
+  H.push_location_onto_tagstack({
+    tagname = new_note.id,
+    line = src_note:insert_text(new_note_link, { section = { header = fwd, level = 2 } }),
+  })
+
+  new_note:open({
+    sync = true,
+    callback = function()
+      new_note:open({ col = 3, line = new_note:insert_text(src_note_link, { section = { header = rev, level = 2 } }) })
     end,
   })
-  H.push_location_onto_tagstack(
-    new_note.id,
-    buf_note:insert_text("- " .. new_note:format_link(), { section = { header = fwd, level = 2 } })
-  )
-  new_note:open({ line = 4 + (new_note.frontmatter_end_line or 0), col = 3 })
 end
 
----@param tagname? string
----@param line_num? number
-function H.push_location_onto_tagstack(tagname, line_num)
-  if type(line_num) ~= "number" or line_num <= 0 then return end
+---@param opts { line: number, tagname: string }
+function H.push_location_onto_tagstack(opts)
+  H.assert_types(opts, { line = "number", tagname = "string" })
   local buf = vim.api.nvim_get_current_buf()
   local col = 3
   local off = 0
-  local new_item = { tagname = tostring(tagname), from = { buf, line_num, col, off } }
-  vim.fn.settagstack(vim.fn.win_getid(), { items = { new_item } }, "t")
+  local new_entry = { tagname = tostring(opts.tagname), from = { buf, opts.line, col, off } }
+  vim.fn.settagstack(vim.fn.win_getid(), { items = { new_entry } }, "t")
+end
+
+---@param lhs? obsidian.Note
+---@param rhs? obsidian.Note
+function H.is_same_note(lhs, rhs)
+  if lhs == nil and rhs == nil then return true end
+  return lhs and rhs and tostring(lhs.path) == tostring(rhs.path)
+end
+
+---@generic K, V
+---@param tbl table<K, V>
+---@param expected_types table<K, string>
+---@return table<K, V>
+function H.assert_types(tbl, expected_types)
+  local errors = {}
+  for key, val in pairs(tbl or {}) do
+    if type(val) ~= expected_types[key] then
+      table.insert(errors, C.WRONG_TYPE_FMT:format(key, vim.inspect(val), expected_types[key]))
+    end
+  end
+  assert(#errors == 0, vim.iter(errors):join("\n"))
+  return tbl
 end
 
 --------------
@@ -170,6 +215,12 @@ C.PRIMARY_VAULT = Vault.new({
   attachments_folder = "9. Meta/Attachments",
   templates_folder = "9. Meta/Templates",
 })
+
+C.LINK_FMT = "- %s"
+C.WRONG_TYPE_FMT = "field %s=%s must have type '%s'"
+
+C.BOOKMARK_SET_FMT = "Bookmark set to %s"
+C.BOOKMARK_UNSET_MSG = "Bookmark unset"
 
 --------
 --- EOF

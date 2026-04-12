@@ -8,7 +8,7 @@ return {
     commit = "f816915e0bf2f60f44d23a5e3d59658fa8a20094",
     dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
     opts = {
-      workspaces = { my_vault.into_workspace() },
+      workspaces = { my_vault.get_workspace_spec() },
       ui = { enable = false },
       -- TODO: Delete after 4.0.0 release
       legacy_commands = false,
