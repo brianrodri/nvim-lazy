@@ -173,6 +173,7 @@ end
 ---@param opts { line: number, tagname: string }
 function H.push_location_onto_tagstack(opts)
   H.assert_types(opts, { line = "number", tagname = "string" })
+  if opts.line <= 0 then return end
   local buf = vim.api.nvim_get_current_buf()
   local col = 3
   local off = 0
