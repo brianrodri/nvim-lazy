@@ -1,47 +1,42 @@
----@class my.Vault
----@field name string
----@field root string
----@field notes_subdir string
----@field daily_notes_subdir string
----@field attachments_subdir string
----@field templates_subdir string
+local M = {}
+
+---@class my.Vault: my.VaultOpts
 ---@field bookmark obsidian.Note|?
 local Vault = {}
+Vault.__index = Vault
 
-local H = {}
+---@class my.VaultOpts
+local MyVaultOpts = {
+  name = "My Vault",
+  root = "~/Vault",
+  fleeting_notes_folder = "2. Fleeting",
+  daily_notes_folder = "1. Journal/1. Daily",
+  attachments_folder = "9. Meta/Attachments",
+  templates_folder = "9. Meta/Templates",
+}
 
----@return my.Vault
-function Vault.new(name, root, opts)
-  local self = setmetatable({}, { __index = Vault })
-  self.name = name
-  self.root = vim.fs.normalize(root)
-  self.notes_subdir = opts.notes_subdir
-  self.daily_notes_subdir = opts.daily_notes_subdir
-  self.attachments_subdir = opts.attachments_subdir
-  self.templates_subdir = opts.templates_subdir
+---@param opts? my.VaultOpts|{}
+function Vault.new(opts)
+  local self = setmetatable(opts and vim.fn.copy(opts) or {}, Vault)
   self.bookmark = nil
   return self
 end
 
----@return boolean
-function Vault:exists()
-  local stat = vim.uv.fs_stat(self.root)
-  return stat and stat.type == "directory" or false
-end
+function Vault:enabled() return require("obsidian.path").new(vim.fs.normalize(self.root)):is_dir() end
 
----@return obsidian.workspace.WorkspaceSpec
 function Vault:into_workspace()
+  ---@type obsidian.workspace.WorkspaceSpec
   return {
     name = self.name,
     path = self.root,
     ---@type obsidian.config|{}
     overrides = {
-      daily_notes = { folder = self.daily_notes_subdir, workdays_only = false, default_tags = {} },
-      attachments = { folder = self.attachments_subdir },
-      templates = { folder = self.templates_subdir }, ---@type obsidian.config.TemplateOpts|{}
-      notes_subdir = self.notes_subdir,
+      daily_notes = { folder = self.daily_notes_folder, workdays_only = false, default_tags = {} },
+      attachments = { folder = self.attachments_folder },
+      templates = { folder = self.templates_folder }, ---@type obsidian.config.TemplateOpts|{}
+      notes_subdir = self.fleeting_notes_folder,
       new_notes_location = "notes_subdir",
-      frontmatter = { enabled = function(path) return vim.fs.dirname(path) == self.notes_subdir end },
+      frontmatter = { enabled = function(path) return vim.fs.dirname(path) == self.fleeting_notes_folder end },
       note_id_func = function(base_id)
         local id = string.format("%s_%s", os.date("%s"), base_id or "")
         return vim
@@ -57,87 +52,85 @@ end
 
 function Vault:pick_recent_note() require("snacks.picker").recent({ filter = { cwd = self.root } }) end
 
----@param bufnr? integer
----@param open? boolean
-function Vault:pick_bookmark(bufnr, open)
+---@param bufnr? number
+---@param on_picked? fun(note?: obsidian.Note, old_note?: obsidian.Note): ...
+function Vault:pick_bookmark(bufnr, on_picked)
+  local set_bookmark = function(note) self:_set_bookmark(note, on_picked) end
   local current_note = require("obsidian.api").current_note(bufnr)
-
-  if self.bookmark and current_note and self.bookmark.path == current_note.path then
-    self.bookmark = nil
-    print("Bookmark unset")
-    return
-  elseif current_note then
-    self.bookmark = current_note
-    print("Bookmark set")
-    if open then self.bookmark:open() end
-    return
-  else
+  if current_note == nil then
     require("obsidian.picker").find_files({
       prompt_title = "Pick Bookmark",
-      callback = function(path)
-        if self.bookmark then return end
-        self.bookmark = require("obsidian.note").from_file(path)
-        print("Bookmark set")
-        if open then self.bookmark:open() end
-      end,
+      callback = function(path) set_bookmark(require("obsidian.note").from_file(path)) end,
     })
+  elseif not self:_is_bookmark(current_note) then
+    set_bookmark(current_note)
+  else
+    set_bookmark(nil)
   end
 end
 
 function Vault:open_bookmark()
   if self.bookmark then
-    self.bookmark:open()
+    self.bookmark:open({ sync = true })
   else
-    error("Bookmark not set")
+    self:pick_bookmark(0, function(note) return note and note:open({ sync = true }) end)
   end
 end
 
 function Vault:append_to_bookmark()
-  assert(self.bookmark, "Bookmark not set")
-  local text = vim.trim(require("obsidian.api").input("Input:") or "")
-  if text == "" then return end
-  self.bookmark:write({ update_content = function(lines) return vim.list_extend(lines, { text }) end })
+  if not self.bookmark then return end
+  local input = vim.trim(require("obsidian.api").input("Input:") or "")
+  if input == "" then return end
+  self.bookmark:write({ update_content = function(lines) return vim.list_extend(lines, { input }) end })
 end
 
----@param bufnr? integer
-function Vault:make_broader_note(bufnr)
-  local broader_note, backlink_line = H.insert_note_link(bufnr, "Broader", "Narrower")
-  if not broader_note then return end
-  broader_note:open({ line = backlink_line, col = 3 })
+---@private
+function Vault:_is_bookmark(note)
+  if not self.bookmark or not note then return false end
+  return tostring(self.bookmark.path) == tostring(note.path)
 end
 
----@param bufnr? integer
-function Vault:make_narrower_note(bufnr)
-  local narrower_note, backlink_line = H.insert_note_link(bufnr, "Narrower", "Broader")
-  if not narrower_note then return end
-  narrower_note:open({ line = backlink_line, col = 3 })
+---@private
+function Vault:_set_bookmark(note, on_changed)
+  note = note and note:exists() and note or nil
+  if note == nil and self.bookmark == nil then return end
+  if note ~= nil and self.bookmark ~= nil and tostring(note.path) == tostring(self.bookmark.path) then return end
+  local old_bookmark = self.bookmark
+  self.bookmark = note
+  print("Bookmark set to " .. tostring(self.bookmark))
+  if on_changed then pcall(on_changed, self.bookmark, old_bookmark) end
 end
 
----@param bufnr? integer
----@param header string
----@param inv_header string
----@return obsidian.Note? note
----@return integer? backlink_line
-function H.insert_note_link(bufnr, header, inv_header)
-  local note_src = require("obsidian.api").current_note(bufnr)
-  if not note_src then return end
-  local note_dst =
-    require("obsidian.note").create({ id = require("obsidian.api").input("Note Id (optional):") }):write({
-      template = Obsidian.opts.note.template,
-      check_buffers = true,
-      update_content = function(lines)
-        return vim.list_extend(lines, { "", "## " .. inv_header, "", "- " .. note_src:format_link() })
-      end,
-    })
+---
+
+local PRIMARY_VAULT = Vault.new(MyVaultOpts)
+local H = {}
+
+M.is_enabled = function() return PRIMARY_VAULT:enabled() end
+M.into_workspace = function() return PRIMARY_VAULT:into_workspace() end
+
+M.open_bookmark = function() PRIMARY_VAULT:open_bookmark() end
+M.pick_bookmark = function() PRIMARY_VAULT:pick_bookmark(0) end
+M.append_to_bookmark = function() PRIMARY_VAULT:append_to_bookmark() end
+
+M.pick_recent_note = function() PRIMARY_VAULT:pick_recent_note() end
+M.make_broader_note = function(bufnr) H.newly_linked_note(bufnr, "Broader", "Narrower") end
+M.make_narrower_note = function(bufnr) H.newly_linked_note(bufnr, "Narrower", "Broader") end
+
+function H.newly_linked_note(bufnr, fwd, inv)
+  local buf_note = require("obsidian.api").current_note(bufnr)
+  if not buf_note then return end
+  local new_note = require("obsidian.note").create({ id = require("obsidian.api").input("ID (optional):") }):write({
+    template = Obsidian.opts.note.template,
+    update_content = function(l) return vim.list_extend(l, { "", "## " .. inv, "", "- " .. buf_note:format_link() }) end,
+  })
   H.push_location_onto_tagstack(
-    note_src.id,
-    note_src:insert_text("- " .. note_dst:format_link(), { section = { header = header, level = 2 } })
+    new_note.id,
+    buf_note:insert_text("- " .. new_note:format_link(), { section = { header = fwd, level = 2 } })
   )
-  return note_dst, (note_dst.has_frontmatter and note_dst.frontmatter_end_line or 0) + 4
+  new_note:open({ line = 4 + (new_note.frontmatter_end_line or 0), col = 3 })
 end
 
----@param tagname string
----@param line_num integer
 function H.push_location_onto_tagstack(tagname, line_num)
   if line_num == 0 then return end
   local buf = vim.api.nvim_get_current_buf()
@@ -147,9 +140,4 @@ function H.push_location_onto_tagstack(tagname, line_num)
   vim.fn.settagstack(vim.fn.win_getid(), { items = { new_item } }, "t")
 end
 
-return Vault.new("My Vault", "~/Vault", {
-  notes_subdir = "2. Fleeting",
-  daily_notes_subdir = "1. Journal/1. Daily",
-  attachments_subdir = "9. Meta/Attachments",
-  templates_subdir = "9. Meta/Templates",
-})
+return M
