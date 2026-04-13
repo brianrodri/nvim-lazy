@@ -6,6 +6,8 @@ return {
     ---@type evergarden.types.config|{}
     opts = {
       theme = { variant = "winter" },
+      ---@diagnostic disable-next-line: missing-fields
+      editor = { transparent_background = true },
       overrides = function(colors)
         return {
           SnacksDashboardHeader = { fg = colors.green },
