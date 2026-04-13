@@ -1,3 +1,5 @@
+local my_utils = require("my.utils")
+
 local M = {} --- MY API
 local H = {} --- MY HELPERS
 local C = {} --- MY CONSTANTS
@@ -12,7 +14,10 @@ function M.pick_bookmark() C.PRIMARY_VAULT:pick_bookmark(0) end
 
 function M.append_to_bookmark() C.PRIMARY_VAULT:append_to_bookmark() end
 
-function M.pick_recent_note() C.PRIMARY_VAULT:pick_recent_note() end
+function M.pick_recent_note()
+  local snacks_picker = require("snacks.picker")
+  snacks_picker.recent({ filter = { cwd = C.PRIMARY_VAULT.root } })
+end
 
 function M.make_broader_note(bufnr)
   H.insert_bidi_link(require("obsidian.api").current_note(bufnr), "Broader", "Narrower")
@@ -35,10 +40,11 @@ end
 local Vault = {}
 Vault.__index = Vault
 
----@param opts? my.VaultOpts
+---@param opts my.Vault
+---@return my.Vault
 function Vault.new(opts)
   if getmetatable(opts) == Vault then return opts end
-  opts = H.assert_types(opts or {}, {
+  my_utils.assert_types(opts, {
     name = "string",
     root = "string",
     fleeting_notes_folder = "string",
@@ -74,12 +80,6 @@ function Vault:get_workspace_spec()
       note_id_func = H.note_id_func,
     },
   }
-end
-
-function Vault:pick_recent_note()
-  local snacks_picker = require("snacks.picker")
-
-  snacks_picker.recent({ filter = { cwd = self.root } })
 end
 
 ---@param bufnr? number
@@ -172,7 +172,7 @@ end
 
 ---@param opts { line: number, tagname: string }
 function H.push_location_onto_tagstack(opts)
-  H.assert_types(opts, { line = "number", tagname = "string" })
+  my_utils.assert_types(opts, { line = "number", tagname = "string" })
   if opts.line <= 0 then return end
   local buf = vim.api.nvim_get_current_buf()
   local col = 3
@@ -186,22 +186,6 @@ end
 function H.is_same_note(lhs, rhs)
   if lhs == nil and rhs == nil then return true end
   return lhs and rhs and tostring(lhs.path) == tostring(rhs.path)
-end
-
----@generic K, V
----@param tbl table<K, V>
----@param expected_types table<K, string>
----@return table<K, V>
-function H.assert_types(tbl, expected_types)
-  local errors = {}
-  for key, expected in pairs(expected_types) do
-    if type(tbl[key]) ~= expected then
-      table.insert(errors, C.WRONG_TYPE_FMT:format(key, vim.inspect(tbl[key]), expected_types[key]))
-    end
-  end
-  table.sort(errors)
-  assert(#errors == 0, vim.iter(errors):join("\n"))
-  return tbl
 end
 
 --------------
