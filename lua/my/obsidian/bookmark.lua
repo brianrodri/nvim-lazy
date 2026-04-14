@@ -1,3 +1,5 @@
+local note_ext = require("my.obsidian.note_ext")
+
 ---@class my.obsidian.Bookmark
 ---@field note? obsidian.Note
 local Bookmark = {}
@@ -26,7 +28,7 @@ function Bookmark:toggle_buffer(bufnr)
   local obsidian_api = require("obsidian.api")
 
   local buf_note = obsidian_api.current_note(bufnr)
-  if buf_note and self.note and tostring(buf_note.path) == tostring(self.note.path) then
+  if buf_note and self.note and note_ext.equal(buf_note, self.note) then
     self.note = nil
   else
     self.note = buf_note

@@ -1,3 +1,5 @@
+local note_ext = require("my.obsidian.note_ext")
+
 ---@class my.obsidian.Vault
 ---@field name string
 ---@field root string
@@ -64,25 +66,24 @@ function Vault:new_linked_note(...)
   local opts = vim.tbl_deep_extend("keep", {}, ..., DEFAULT_LINKED_NOTE_OPTS)
   local src_note = opts.src_note or obsidian_api.current_note(opts.src_buf or 0)
   local dst_note = opts.dst_note or obsidian_unique.new_unique_note(nil, { should_write = true })
-  assert(src_note, "src_note must be provided")
-  assert(dst_note, "dst_note must be provided")
+  assert(src_note and dst_note and not note_ext.equal(src_note, dst_note))
 
-  local dst_link = opts.link_fmt:format(dst_note:format_link())
-  local src_col = dst_link:len() + 1
-  local src_lnum = src_note:insert_text(dst_link, opts.src_insert_opts)
-  assert(src_lnum > 0, "Failed to insert link into source note")
+  local link_to_dst_note = opts.link_fmt:format(dst_note:format_link())
+  local src_col = link_to_dst_note:len() + 1
+  local src_line = src_note:insert_text(link_to_dst_note, opts.src_insert_opts)
+  assert(src_line > 0, "Failed to insert link into source note")
 
-  local new_tagstack_item = { tagname = dst_note.id, from = { src_note.bufnr, src_lnum, src_col, 0 } }
-  vim.fn.settagstack(vim.fn.bufwinid(opts.src_buf), { items = { new_tagstack_item } }, "t")
+  local new_tagstack_item = { tagname = dst_note.id, from = { src_note.bufnr, src_line, src_col, 0 } }
+  vim.fn.settagstack(vim.fn.bufwinid(src_note.bufnr), { items = { new_tagstack_item } }, "t")
 
   dst_note:open({
     callback = vim.schedule_wrap(function()
-      local src_link = opts.link_fmt:format(src_note:format_link())
-      local dst_col = src_link:len() + 1
-      local dst_lnum = dst_note:insert_text(src_link, opts.dst_insert_opts)
-      assert(dst_lnum > 0, "Failed to insert link into destination note")
+      local link_to_src_note = opts.link_fmt:format(src_note:format_link())
+      local dst_col = link_to_src_note:len() + 1
+      local dst_line = dst_note:insert_text(link_to_src_note, opts.dst_insert_opts)
+      assert(dst_line > 0, "Failed to insert link into destination note")
 
-      vim.schedule(function() dst_note:open({ line = dst_lnum, col = dst_col }) end)
+      vim.schedule(function() dst_note:open({ line = dst_line, col = dst_col }) end)
     end),
   })
 end
