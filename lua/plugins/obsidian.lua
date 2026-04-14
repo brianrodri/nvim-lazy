@@ -1,4 +1,28 @@
-local my_vault = require("my.vault")
+local bookmark = require("my.obsidian.bookmark")
+local my_vault = require("my.obsidian.vault")
+
+local BOOKMARK = bookmark.new()
+
+local VAULT = my_vault.new({
+  name = "My Vault",
+  root = "~/Vault",
+  fleeting_notes_folder = "2. Fleeting",
+  daily_notes_folder = "1. Journal/1. Daily",
+  attachments_folder = "9. Meta/Attachments",
+  templates_folder = "9. Meta/Templates",
+})
+
+---@type my.obsidian.LinkedNoteOpts
+local NARROW_OPTS = {
+  src_insert_opts = { section = { header = "Narrower", level = 2 } },
+  dst_insert_opts = { section = { header = "Broader", level = 2 } },
+}
+
+---@type my.obsidian.LinkedNoteOpts
+local BROADEN_OPTS = {
+  src_insert_opts = { section = { header = "Broader", level = 2 } },
+  dst_insert_opts = { section = { header = "Narrower", level = 2 } },
+}
 
 ---@module "lazy"
 ---@type LazySpec
@@ -8,7 +32,7 @@ return {
     commit = "f816915e0bf2f60f44d23a5e3d59658fa8a20094",
     dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
     opts = {
-      workspaces = { my_vault.get_workspace_spec() },
+      workspaces = { VAULT:get_workspace_spec() },
       ui = { enable = false },
       -- TODO: Delete after 4.0.0 release
       legacy_commands = false,
@@ -19,14 +43,16 @@ return {
         group = vim.api.nvim_create_augroup("MyObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
+          local link_opts = { src_buf = args.buf }
           require("which-key").add({
-            { "<leader>vj", function() my_vault.make_narrower_note(args.buf) end, desc = "Make Narrower Note" },
-            { "<leader>vk", function() my_vault.make_broader_note(args.buf) end, desc = "Make Broader Note" },
+            { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
+            { "<leader>vj", function() VAULT:new_linked_note(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
+            { "<leader>vk", function() VAULT:new_linked_note(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
           }, { buf = args.buf })
         end,
       })
     end,
-    enabled = my_vault.is_enabled,
+    enabled = VAULT:exists(),
     keys = {
       { "<leader>vn", ":Obsidian new<cr>", desc = "New Note", silent = true },
       { "<leader>vN", ":Obsidian new<cr><cr>", desc = "New Note", silent = true },
@@ -35,10 +61,9 @@ return {
       { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian", silent = true },
       { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract to Note", mode = { "n", "v" }, silent = true },
       { "<leader>vt", ":Obsidian today<cr>", desc = "Today's Note", silent = true },
-      { "<leader>vp", my_vault.pick_bookmark, desc = "Pick Bookmark" },
-      { "<leader>vr", my_vault.pick_recent_note, desc = "Recent Notes", silent = true },
-      { "<leader>vv", my_vault.open_bookmark, desc = "Open Bookmark", silent = true },
-      { "<leader>va", my_vault.append_to_bookmark, desc = "Append To Bookmark", silent = true },
+      { "<leader>vr", function() VAULT:pick_recent() end, desc = "Recent Notes", silent = true },
+      { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark", silent = true },
+      { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark", silent = true },
     },
   },
 }
