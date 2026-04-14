@@ -33,22 +33,27 @@ function Vault:get_workspace_spec()
 end
 
 ---@class my.obsidian.LinkedNoteOpts
----@field src_insert_opts obsidian.note.InsertTextOpts|{}
----@field dst_insert_opts obsidian.note.InsertTextOpts|{}
----@field link_fmt string?
----@field src_buf integer?
----@field src_note obsidian.Note?
----@field dst_note obsidian.Note?
 local DEFAULT_LINKED_NOTE_OPTS = {
+  ---@type string?
+  link_fmt = "- %s",
+
+  ---@type integer?
+  src_buf = nil,
+  ---@type obsidian.Note?
+  src_note = nil,
+  ---@type obsidian.note.InsertTextOpts|{}
   src_insert_opts = {
     placement = "bot",
     section = { header = "Outgoing Links", level = 2, on_missing = "create" },
   },
+
+  ---@type obsidian.Note?
+  dst_note = nil,
+  ---@type obsidian.note.InsertTextOpts|{}
   dst_insert_opts = {
     placement = "bot",
     section = { header = "Incoming Links", level = 2, on_missing = "create" },
   },
-  link_fmt = "- %s",
 }
 
 ---@param ... {}|my.obsidian.LinkedNoteOpts
@@ -63,23 +68,20 @@ function Vault:new_linked_note(...)
   assert(dst_note, "dst_note must be provided")
 
   local dst_link = opts.link_fmt:format(dst_note:format_link())
+  local src_col = dst_link:len() + 1
   local src_lnum = src_note:insert_text(dst_link, opts.src_insert_opts)
   assert(src_lnum > 0, "Failed to insert link into source note")
 
-  local buf_pos = vim.api.nvim_buf_call(src_note.bufnr, function() return vim.fn.getpos(".") end)
-  if buf_pos[1] == src_note.bufnr then
-    buf_pos[2] = src_lnum
-    buf_pos[3] = dst_link:len() + 1
-    local item = { tagname = dst_note.id, from = buf_pos }
-    vim.fn.settagstack(vim.fn.bufwinid(opts.src_buf), { items = { item } }, "t")
-  end
+  local new_tagstack_item = { tagname = dst_note.id, from = { src_note.bufnr, src_lnum, src_col, 0 } }
+  vim.fn.settagstack(vim.fn.bufwinid(opts.src_buf), { items = { new_tagstack_item } }, "t")
 
   dst_note:open({
     callback = vim.schedule_wrap(function()
       local src_link = opts.link_fmt:format(src_note:format_link())
+      local dst_col = src_link:len() + 1
       local dst_lnum = dst_note:insert_text(src_link, opts.dst_insert_opts)
       assert(dst_lnum > 0, "Failed to insert link into destination note")
-      local dst_col = src_link:len() + 1
+
       vim.schedule(function() dst_note:open({ line = dst_lnum, col = dst_col }) end)
     end),
   })
@@ -89,7 +91,7 @@ local M = {}
 
 function M.new(opts)
   local self = setmetatable(opts or {}, { __index = Vault })
-  self.root = vim.fs.normalize(vim.fn.expand(self.root or ""))
+  self.root = vim.fs.normalize(self.root or "")
   return self
 end
 
