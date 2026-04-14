@@ -45,10 +45,11 @@ return {
         callback = function(args)
           local link_opts = { src_buf = args.buf }
           require("which-key").add({
+            buffer = args.buf,
             { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
             { "<leader>vj", function() VAULT:new_linked_note(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
             { "<leader>vk", function() VAULT:new_linked_note(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
-          }, { buf = args.buf })
+          })
         end,
       })
     end,
