@@ -77,8 +77,11 @@ function Vault:new_linked_note(...)
   local src_line = src_note:insert_text(link_to_dst_note, opts.src_insert_opts)
   assert(src_line > 0, "Failed to insert link into source note")
 
-  local new_tagstack_item = { tagname = dst_note.id, from = { src_note.bufnr, src_line, src_col, 0 } }
-  vim.fn.settagstack(vim.fn.bufwinid(src_note.bufnr), { items = { new_tagstack_item } }, "t")
+  local src_win = vim.fn.bufwinid(src_note.bufnr)
+  if src_win > -1 then
+    local new_item = { tagname = dst_note.id, from = { src_note.bufnr, src_line, src_col, 0 } }
+    vim.fn.settagstack(src_win, { items = { new_item } }, "t")
+  end
 
   dst_note:open({
     callback = vim.schedule_wrap(function()
