@@ -63,10 +63,14 @@ function Vault:new_linked_note(...)
   local obsidian_api = require("obsidian.api")
   local obsidian_unique = require("obsidian.unique")
 
-  local opts = vim.tbl_deep_extend("keep", {}, ..., DEFAULT_LINKED_NOTE_OPTS)
+  local opt_parts = vim.list_extend({ ... }, { DEFAULT_LINKED_NOTE_OPTS })
+  local opts = vim.tbl_deep_extend("keep", {}, table.unpack(opt_parts))
+
   local src_note = opts.src_note or obsidian_api.current_note(opts.src_buf or 0)
+  assert(src_note, "Failed to resolve source note")
   local dst_note = opts.dst_note or obsidian_unique.new_unique_note(nil, { should_write = true })
-  assert(src_note and dst_note and not note_ext.equal(src_note, dst_note))
+  assert(dst_note, "Failed to resolve destination note")
+  assert(not note_ext.equal(src_note, dst_note), "Refused to create self-referential link")
 
   local link_to_dst_note = opts.link_fmt:format(dst_note:format_link())
   local src_col = link_to_dst_note:len() + 1
