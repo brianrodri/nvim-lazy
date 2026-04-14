@@ -64,7 +64,7 @@ function Vault:new_linked_note(...)
   local obsidian_unique = require("obsidian.unique")
 
   local opt_parts = vim.list_extend({ ... }, { DEFAULT_LINKED_NOTE_OPTS })
-  local opts = vim.tbl_deep_extend("keep", {}, table.unpack(opt_parts))
+  local opts = vim.tbl_deep_extend("keep", {}, unpack(opt_parts))
 
   local src_note = opts.src_note or obsidian_api.current_note(opts.src_buf or 0)
   assert(src_note, "Failed to resolve source note")
