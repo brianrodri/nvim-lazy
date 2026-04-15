@@ -7,8 +7,8 @@ local BOOKMARK = bookmark.new()
 local VAULT = my_vault.new({
   name = "My Vault",
   root = "~/Vault",
-  fleeting_notes_folder = "2. Fleeting",
   daily_notes_folder = "1. Journal/1. Daily",
+  fleeting_notes_folder = "2. Fleeting",
   attachments_folder = "9. Meta/Attachments",
   templates_folder = "9. Meta/Templates",
 })
