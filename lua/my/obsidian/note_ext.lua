@@ -1,5 +1,3 @@
-local M = {}
-
 ---@type table<string, string>
 local NORMALIZED_PATH_CACHE = {}
 
@@ -10,6 +8,8 @@ local function normalized(path)
   if not NORMALIZED_PATH_CACHE[path] then NORMALIZED_PATH_CACHE[path] = vim.fs.normalize(path) end
   return NORMALIZED_PATH_CACHE[path]
 end
+
+local M = {}
 
 ---@param note1 obsidian.Note
 ---@param note2 obsidian.Note

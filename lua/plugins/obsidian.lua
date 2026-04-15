@@ -1,4 +1,5 @@
 local bookmark = require("my.obsidian.bookmark")
+local insert_links = require("my.obsidian.insert_links")
 local my_vault = require("my.obsidian.vault")
 
 local BOOKMARK = bookmark.new()
@@ -47,8 +48,8 @@ return {
           require("which-key").add({
             buffer = args.buf,
             { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
-            { "<leader>vj", function() VAULT:new_linked_note(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
-            { "<leader>vk", function() VAULT:new_linked_note(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
+            { "<leader>vj", function() insert_links.create(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
+            { "<leader>vk", function() insert_links.create(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
           })
         end,
       })
