@@ -1,24 +1,25 @@
 local bookmark = require("my.obsidian.bookmark")
-local my_vault = require("my.obsidian.vault")
+local linker = require("my.obsidian.linker")
+local vault = require("my.obsidian.vault")
 
 local BOOKMARK = bookmark.new()
 
-local VAULT = my_vault.new({
+local VAULT = vault.new({
   name = "My Vault",
   root = "~/Vault",
-  fleeting_notes_folder = "2. Fleeting",
   daily_notes_folder = "1. Journal/1. Daily",
+  fleeting_notes_folder = "2. Fleeting",
   attachments_folder = "9. Meta/Attachments",
   templates_folder = "9. Meta/Templates",
 })
 
----@type my.obsidian.LinkedNoteOpts
+---@type my.obsidian.linker.LinkOpts
 local NARROW_OPTS = {
   src_insert_opts = { section = { header = "Narrower", level = 2 } },
   dst_insert_opts = { section = { header = "Broader", level = 2 } },
 }
 
----@type my.obsidian.LinkedNoteOpts
+---@type my.obsidian.linker.LinkOpts
 local BROADEN_OPTS = {
   src_insert_opts = { section = { header = "Broader", level = 2 } },
   dst_insert_opts = { section = { header = "Narrower", level = 2 } },
@@ -43,12 +44,12 @@ return {
         group = vim.api.nvim_create_augroup("MyObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
-          local link_opts = { src_buf = args.buf }
+          local buf = args.buf
+          local l_opts = { src_note = buf }
           require("which-key").add({
-            buffer = args.buf,
-            { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
-            { "<leader>vj", function() VAULT:new_linked_note(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
-            { "<leader>vk", function() VAULT:new_linked_note(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
+            { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
+            { "<leader>vj", function() linker.new(l_opts, NARROW_OPTS) end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() linker.new(l_opts, BROADEN_OPTS) end, desc = "Make Broader Note", buffer = buf },
           })
         end,
       })
