@@ -1,21 +1,23 @@
 local note_ext = require("my.obsidian.note_ext")
 
 ---@class my.obsidian.LinkedNoteOpts
+---@field link_fmt string?
+---@field src_buf integer?
+---@field src_note obsidian.Note?
+---@field src_insert_opts obsidian.note.InsertTextOpts|{}
+---@field dst_note obsidian.Note?
+---@field dst_insert_opts obsidian.note.InsertTextOpts|{}
+
+---@type my.obsidian.LinkedNoteOpts
 local DEFAULT_OPTS = {
-  ---@type string?
   link_fmt = "- %s",
-  ---@type integer?
   src_buf = nil,
-  ---@type obsidian.Note?
   src_note = nil,
-  ---@type obsidian.note.InsertTextOpts|{}
   src_insert_opts = {
     placement = "bot",
     section = { header = "Outgoing Links", level = 2, on_missing = "create" },
   },
-  ---@type obsidian.Note?
   dst_note = nil,
-  ---@type obsidian.note.InsertTextOpts|{}
   dst_insert_opts = {
     placement = "bot",
     section = { header = "Incoming Links", level = 2, on_missing = "create" },
@@ -25,12 +27,11 @@ local DEFAULT_OPTS = {
 local M = {}
 
 ---@param ... {}|my.obsidian.LinkedNoteOpts
-function M.create(...)
+function M.between(...)
   local obsidian_api = require("obsidian.api")
   local obsidian_unique = require("obsidian.unique")
 
-  local opts = vim.tbl_deep_extend("keep", {}, ...) ---@type my.obsidian.LinkedNoteOpts
-  vim.tbl_deep_extend("keep", opts, DEFAULT_OPTS)
+  local opts = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULT_OPTS), ...)
 
   local src_note = opts.src_note or obsidian_api.current_note(opts.src_buf or 0)
   assert(src_note, "Failed to resolve source note")

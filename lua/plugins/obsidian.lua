@@ -48,8 +48,8 @@ return {
           require("which-key").add({
             buffer = args.buf,
             { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
-            { "<leader>vj", function() insert_links.create(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
-            { "<leader>vk", function() insert_links.create(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
+            { "<leader>vj", function() insert_links.between(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
+            { "<leader>vk", function() insert_links.between(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
           })
         end,
       })
