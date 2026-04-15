@@ -9,32 +9,14 @@ function M.new(...)
   local opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), ...)
 
   H.resolve_note(opts.src_note, function(src_note)
+    if not src_note then return end
     H.resolve_note(opts.dst_note, function(dst_note)
-      assert(not note_ext.equal(src_note, dst_note), "Source and Destination must be different")
+      if not dst_note or note_ext.equal(src_note, dst_note) then return end
+      local src_pos = H.insert_link(src_note, opts.link_fmt:format(dst_note:format_link()), opts.src_insert_opts)
+      local dst_pos = H.insert_link(dst_note, opts.link_fmt:format(src_note:format_link()), opts.dst_insert_opts)
 
-      local link_to_dst_note = opts.link_fmt:format(dst_note:format_link())
-      local src_row = src_note:insert_text(link_to_dst_note, opts.src_insert_opts)
-      assert(src_row > 0, "Source could not be changed")
-
-      local src_buf = src_note.bufnr or -1
-      local src_win = src_buf > 0 and vim.fn.bufwinid(src_buf) or src_buf
-      if src_buf ~= -1 and src_win ~= -1 then
-        local src_col = link_to_dst_note:len() + 1
-        local new_tagstack_item = { tagname = dst_note.id, from = { src_buf, src_row, src_col, 0 } }
-        vim.fn.settagstack(src_win, { items = { new_tagstack_item } }, "t")
-      end
-
-      dst_note:open({
-        sync = true,
-        callback = function()
-          local link_to_src_note = opts.link_fmt:format(src_note:format_link())
-          local dst_row = dst_note:insert_text(link_to_src_note, opts.dst_insert_opts)
-          assert(dst_row > 0, "Destination could not be changed")
-
-          local dst_col = link_to_src_note:len() + 1
-          vim.schedule(function() dst_note:open({ sync = true, line = dst_row, col = dst_col }) end)
-        end,
-      })
+      H.try_pushing_tagstack_item(dst_note.id, src_pos)
+      vim.schedule(function() dst_note:open({ sync = true, line = dst_pos[2], col = dst_pos[3] }) end)
     end)
   end)
 end
@@ -42,22 +24,41 @@ end
 ---@param arg? my.obsidian.linker.ResolveNoteOpts
 ---@param callback fun(note: obsidian.Note)
 function H.resolve_note(arg, callback)
-  local callback_unless_nil = function(opt_note)
-    if opt_note then callback(opt_note) end
-  end
+  local safely_callback = function(note) return note and callback(note) or nil end
 
   if type(arg) == "number" then
-    callback_unless_nil(require("obsidian.api").current_note(arg))
+    safely_callback(require("obsidian.api").current_note(arg))
   elseif type(arg) == "string" then
-    local func = assert(C.AUTO_RESOLVE[arg], string.format("unknown strategy: %q", arg))
-    func(callback_unless_nil)
-  else ---@cast arg obsidian.Note|?
-    callback_unless_nil(arg)
+    local resolver = assert(C.BUILTIN_RESOLVERS[arg], "invalid value: " .. arg)
+    resolver(safely_callback)
+  else ---@cast arg -string|integer
+    safely_callback(arg)
   end
 end
 
+---@param note obsidian.Note
+---@param text string
+---@param opts obsidian.note.InsertTextOpts
+---@param off? integer
+---@return [number, number, number, number] pos as returned by |getpos()| (`bufnr`, `line`, `col`, `off`).
+function H.insert_link(note, text, opts, off)
+  local line = require("obsidian.note").from_file(note.path):insert_text(text, opts)
+  assert(line > 0, "Failed to insert text")
+  return { note.bufnr or -1, line, text:len() + 1, off }
+end
+
+---@param jump_id? string
+---@param jump_pos [number, number, number, number] as returned by |getpos()| (`bufnr`, `line`, `col`, `off`).
+function H.try_pushing_tagstack_item(jump_id, jump_pos)
+  local buf = jump_pos[1]
+  if buf < 0 then return end
+  local win = buf == 0 and buf or vim.fn.bufwinid(buf)
+  if win < 0 then return end
+  vim.fn.settagstack(win, { items = { { tagname = jump_id, from = jump_pos } } }, "t")
+end
+
 ---@type table<string, fun(callback: fun(note?: obsidian.Note))>
-C.AUTO_RESOLVE = {
+C.BUILTIN_RESOLVERS = {
   named = function(callback) require("obsidian.actions").new(nil, callback) end,
   unique = function(callback) callback(require("obsidian.actions").unique_note()) end,
 }
