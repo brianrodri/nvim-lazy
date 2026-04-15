@@ -44,7 +44,7 @@ end
 function H.insert_link(note, text, opts, off)
   local line = require("obsidian.note").from_file(note.path):insert_text(text, opts)
   assert(line > 0, "Failed to insert text")
-  return { note.bufnr or -1, line, text:len() + 1, off }
+  return { note.bufnr or -1, line, text:len() + 1, off or 0 }
 end
 
 ---@param jump_id? string
