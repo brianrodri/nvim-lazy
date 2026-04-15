@@ -1,10 +1,10 @@
 local bookmark = require("my.obsidian.bookmark")
-local insert_links = require("my.obsidian.insert_links")
-local my_vault = require("my.obsidian.vault")
+local linker = require("my.obsidian.linker")
+local vault = require("my.obsidian.vault")
 
 local BOOKMARK = bookmark.new()
 
-local VAULT = my_vault.new({
+local VAULT = vault.new({
   name = "My Vault",
   root = "~/Vault",
   daily_notes_folder = "1. Journal/1. Daily",
@@ -13,13 +13,13 @@ local VAULT = my_vault.new({
   templates_folder = "9. Meta/Templates",
 })
 
----@type my.obsidian.LinkedNoteOpts
+---@type my.obsidian.linker.LinkOpts
 local NARROW_OPTS = {
   src_insert_opts = { section = { header = "Narrower", level = 2 } },
   dst_insert_opts = { section = { header = "Broader", level = 2 } },
 }
 
----@type my.obsidian.LinkedNoteOpts
+---@type my.obsidian.linker.LinkOpts
 local BROADEN_OPTS = {
   src_insert_opts = { section = { header = "Broader", level = 2 } },
   dst_insert_opts = { section = { header = "Narrower", level = 2 } },
@@ -44,12 +44,12 @@ return {
         group = vim.api.nvim_create_augroup("MyObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
-          local link_opts = { src_buf = args.buf }
+          local link_opts = { src_note = args.buf } ---@type my.obsidian.linker.LinkOpts
           require("which-key").add({
             buffer = args.buf,
             { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
-            { "<leader>vj", function() insert_links.between(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
-            { "<leader>vk", function() insert_links.between(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
+            { "<leader>vj", function() linker.new(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
+            { "<leader>vk", function() linker.new(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
           })
         end,
       })
