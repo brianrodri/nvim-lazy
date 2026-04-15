@@ -44,13 +44,12 @@ return {
         group = vim.api.nvim_create_augroup("MyObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
-          ---@type my.obsidian.linker.LinkOpts
-          local link_opts = { src_note = args.buf }
+          local buf = args.buf
+          local l_opts = { src_note = buf }
           require("which-key").add({
-            buffer = args.buf,
-            { "<leader>vp", function() BOOKMARK:toggle_buffer(args.buf) end, desc = "Pick Bookmark" },
-            { "<leader>vj", function() linker.new(link_opts, NARROW_OPTS) end, desc = "Make Narrower Note" },
-            { "<leader>vk", function() linker.new(link_opts, BROADEN_OPTS) end, desc = "Make Broader Note" },
+            { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
+            { "<leader>vj", function() linker.new(l_opts, NARROW_OPTS) end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() linker.new(l_opts, BROADEN_OPTS) end, desc = "Make Broader Note", buffer = buf },
           })
         end,
       })
