@@ -13,6 +13,6 @@ local M = {}
 
 ---@param note1 obsidian.Note
 ---@param note2 obsidian.Note
-function M.equal(note1, note2) return normalized(note1.path) == normalized(note2.path) end
+function M.is_equal(note1, note2) return normalized(note1.path) == normalized(note2.path) end
 
 return M

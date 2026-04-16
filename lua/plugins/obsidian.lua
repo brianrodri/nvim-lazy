@@ -1,5 +1,5 @@
 local bookmark = require("my.obsidian.bookmark")
-local linker = require("my.obsidian.linker")
+local links = require("my.obsidian.links")
 local vault = require("my.obsidian.vault")
 
 local BOOKMARK = bookmark.new()
@@ -13,14 +13,17 @@ local VAULT = vault.new({
   templates_folder = "9. Meta/Templates",
 })
 
----@type my.obsidian.linker.LinkOpts
-local NARROW_OPTS = {
+---@type snacks.picker.recent.Config
+local RECENT_OPTS = { filter = { cwd = VAULT.root } }
+
+---@type my.obsidian.links.LinkOpts
+local NARROW_PART = {
   src_insert_opts = { section = { header = "Narrower", level = 2 } },
   dst_insert_opts = { section = { header = "Broader", level = 2 } },
 }
 
----@type my.obsidian.linker.LinkOpts
-local BROADEN_OPTS = {
+---@type my.obsidian.links.LinkOpts
+local BROADEN_PART = {
   src_insert_opts = { section = { header = "Broader", level = 2 } },
   dst_insert_opts = { section = { header = "Narrower", level = 2 } },
 }
@@ -45,27 +48,26 @@ return {
         pattern = "ObsidianNoteEnter",
         callback = function(args)
           local buf = args.buf
-          local l_opts = { src_note = buf }
+          local buf_part = { src_note = buf }
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() linker.new(l_opts, NARROW_OPTS) end, desc = "Make Narrower Note", buffer = buf },
-            { "<leader>vk", function() linker.new(l_opts, BROADEN_OPTS) end, desc = "Make Broader Note", buffer = buf },
+            { "<leader>vj", function() links.new(buf_part, NARROW_PART) end, desc = "Add Narrower Note", buffer = buf },
+            { "<leader>vk", function() links.new(buf_part, BROADEN_PART) end, desc = "Add Broader Note", buffer = buf },
           })
         end,
       })
     end,
     enabled = VAULT:exists(),
     keys = {
-      { "<leader>vn", ":Obsidian new<cr>", desc = "New Note", silent = true },
-      { "<leader>vN", ":Obsidian new<cr><cr>", desc = "New Note", silent = true },
-      { "<leader>vs", ":Obsidian search<cr>", desc = "Search Notes", silent = true },
-      { "<leader>vf", ":Obsidian quick_switch<cr>", desc = "Find Note", silent = true },
-      { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian", silent = true },
-      { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract to Note", mode = { "n", "v" }, silent = true },
-      { "<leader>vt", ":Obsidian today<cr>", desc = "Today's Note", silent = true },
-      { "<leader>vr", function() VAULT:pick_recent() end, desc = "Recent Notes", silent = true },
-      { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark", silent = true },
-      { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark", silent = true },
+      { "<leader>vn", ":Obsidian new<cr>", desc = "New Note" },
+      { "<leader>vs", ":Obsidian search<cr>", desc = "Grep Notes" },
+      { "<leader>vf", ":Obsidian quick_switch<cr>", desc = "Find Notes" },
+      { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian" },
+      { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract Note", mode = { "n", "v" } },
+      { "<leader>vt", ":Obsidian today<cr>", desc = "Daily Note" },
+      { "<leader>vr", function() require("snacks.picker").recent(RECENT_OPTS) end, desc = "Recent Notes" },
+      { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark" },
+      { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark" },
     },
   },
 }

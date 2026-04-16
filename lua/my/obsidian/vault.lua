@@ -12,8 +12,6 @@ function Vault:exists()
   return stat and stat.type == "directory"
 end
 
-function Vault:pick_recent() require("snacks.picker").recent({ filter = { cwd = self.root } }) end
-
 function Vault:get_workspace_spec()
   ---@type obsidian.workspace.WorkspaceSpec
   return {

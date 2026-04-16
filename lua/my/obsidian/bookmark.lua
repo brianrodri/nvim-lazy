@@ -28,7 +28,7 @@ function Bookmark:toggle_buffer(bufnr)
   local obsidian_api = require("obsidian.api")
 
   local buf_note = obsidian_api.current_note(bufnr)
-  if buf_note and self.note and note_ext.equal(buf_note, self.note) then
+  if buf_note and self.note and note_ext.is_equal(buf_note, self.note) then
     self.note = nil
   else
     self.note = buf_note
