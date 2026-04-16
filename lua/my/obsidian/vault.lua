@@ -22,6 +22,10 @@ function Vault:get_workspace_spec()
       daily_notes = { folder = self.daily_notes_folder, workdays_only = false, default_tags = {} },
       attachments = { folder = self.attachments_folder },
       frontmatter = { enabled = function(rel_path) return vim.fs.dirname(rel_path) == self.fleeting_notes_folder end },
+      note_id_func = function(title, path)
+        local builtin = require("obsidian.builtin")
+        return string.format("%s-%s", os.time(), builtin.title_id(title, path))
+      end,
       ---@diagnostic disable-next-line: missing-fields
       templates = { folder = self.templates_folder },
       notes_subdir = self.fleeting_notes_folder,
