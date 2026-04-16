@@ -1,10 +1,10 @@
-local note_ext = require("my.obsidian.note_ext")
+local notes = require("my.obsidian_ext.notes")
 
 local M = {}
 local H = {}
 local C = {}
 
----@param ... my.obsidian.links.LinkOpts used to overwrite default opts with `vim.tbl_deep_extend("force", ...)`.
+---@param ... my.obsidian_ext.links.LinkOpts used to overwrite default opts with `vim.tbl_deep_extend("force", ...)`.
 function M.new(...)
   local opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), ...)
 
@@ -12,7 +12,7 @@ function M.new(...)
     if not src_note then return end
 
     H.resolve_note(opts.dst.note, function(dst_note)
-      if not dst_note or note_ext.is_equal(src_note, dst_note) then return end
+      if not dst_note or notes.is_equal(src_note, dst_note) then return end
 
       local src_pos = H.insert_link(src_note, opts.link_fmt:format(dst_note:format_link()), opts.src.insert_opts)
       local dst_pos = H.insert_link(dst_note, opts.link_fmt:format(src_note:format_link()), opts.dst.insert_opts)
@@ -23,7 +23,7 @@ function M.new(...)
   end)
 end
 
----@param arg? my.obsidian.links.ResolveNoteOpts
+---@param arg? my.obsidian_ext.links.ResolveNoteOpts
 ---@param callback fun(note: obsidian.Note)
 function H.resolve_note(arg, callback)
   local safely_callback = function(note)
@@ -67,7 +67,7 @@ C.BUILTIN_RESOLVERS = {
   unique = function(callback) callback(require("obsidian.actions").unique_note()) end,
 }
 
----@type my.obsidian.links.LinkOpts
+---@type my.obsidian_ext.links.LinkOpts
 C.DEFAULT_LINK_OPTS = {
   link_fmt = "- %s",
   src = {
@@ -81,18 +81,18 @@ C.DEFAULT_LINK_OPTS = {
 }
 
 --- Resolve a note by predefined strategy name (string), buffer number (integer), or explicit note.
----@alias my.obsidian.links.ResolveNoteOpts
+---@alias my.obsidian_ext.links.ResolveNoteOpts
 ---| string
 ---| integer
 ---| obsidian.Note
 
----@class my.obsidian.links.NoteOpts
----@field note? my.obsidian.links.ResolveNoteOpts
+---@class my.obsidian_ext.links.NoteOpts
+---@field note? my.obsidian_ext.links.ResolveNoteOpts
 ---@field insert_opts? obsidian.note.InsertTextOpts
 
----@class my.obsidian.links.LinkOpts
+---@class my.obsidian_ext.links.LinkOpts
 ---@field link_fmt? string
----@field src? my.obsidian.links.NoteOpts
----@field dst? my.obsidian.links.NoteOpts
+---@field src? my.obsidian_ext.links.NoteOpts
+---@field dst? my.obsidian_ext.links.NoteOpts
 
 return M

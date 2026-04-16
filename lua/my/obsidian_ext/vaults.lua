@@ -1,4 +1,4 @@
----@class my.obsidian.Vault
+---@class my.obsidian_ext.Vault
 ---@field name string
 ---@field root string
 ---@field fleeting_notes_folder string

@@ -1,10 +1,10 @@
-local bookmark = require("my.obsidian.bookmark")
-local links = require("my.obsidian.links")
-local vault = require("my.obsidian.vault")
+local bookmarks = require("my.obsidian_ext.bookmarks")
+local links = require("my.obsidian_ext.links")
+local vaults = require("my.obsidian_ext.vaults")
 
-local BOOKMARK = bookmark.new()
+local BOOKMARK = bookmarks.new()
 
-local VAULT = vault.new({
+local VAULT = vaults.new({
   name = "My Vault",
   root = "~/Vault",
   daily_notes_folder = "1. Journal/1. Daily",
@@ -16,13 +16,13 @@ local VAULT = vault.new({
 ---@type snacks.picker.recent.Config
 local RECENT_OPTS = { filter = { cwd = VAULT.root } }
 
----@type my.obsidian.links.LinkOpts
+---@type my.obsidian_ext.links.LinkOpts
 local NARROW_PART = {
   src_insert_opts = { section = { header = "Narrower", level = 2 } },
   dst_insert_opts = { section = { header = "Broader", level = 2 } },
 }
 
----@type my.obsidian.links.LinkOpts
+---@type my.obsidian_ext.links.LinkOpts
 local BROADEN_PART = {
   src_insert_opts = { section = { header = "Broader", level = 2 } },
   dst_insert_opts = { section = { header = "Narrower", level = 2 } },
