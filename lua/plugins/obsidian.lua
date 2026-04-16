@@ -29,8 +29,8 @@ local BROADEN_OPTS = {
 ---@type LazySpec
 return {
   {
-    "obsidian-nvim/obsidian.nvim",
-    commit = "f816915e0bf2f60f44d23a5e3d59658fa8a20094",
+    "brianrodri/obsidian.nvim",
+    commit = "d0c2db162cca839df03c86505c3fbde098f4c630",
     dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
     opts = {
       workspaces = { VAULT:get_workspace_spec() },
