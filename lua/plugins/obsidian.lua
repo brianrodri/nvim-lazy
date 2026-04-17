@@ -13,20 +13,20 @@ local VAULT = vaults.new({
   templates_folder = "9. Meta/Templates",
 })
 
----@type snacks.picker.recent.Config
-local RECENT_OPTS = { filter = { cwd = VAULT.root } }
-
 ---@type my.obsidian_ext.links.LinkOpts
-local NARROW_PART = {
+local NARROW_OPTS = {
   src_insert_opts = { section = { header = "Narrower", level = 2 } },
   dst_insert_opts = { section = { header = "Broader", level = 2 } },
 }
 
 ---@type my.obsidian_ext.links.LinkOpts
-local BROADEN_PART = {
+local BROAD_OPTS = {
   src_insert_opts = { section = { header = "Broader", level = 2 } },
   dst_insert_opts = { section = { header = "Narrower", level = 2 } },
 }
+
+---@type snacks.picker.recent.Config
+local RECENT_OPTS = { filter = { cwd = VAULT.root } }
 
 ---@module "lazy"
 ---@type LazySpec
@@ -51,8 +51,8 @@ return {
           local buf_part = { src_note = buf }
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() links.new(buf_part, NARROW_PART) end, desc = "Add Narrower Note", buffer = buf },
-            { "<leader>vk", function() links.new(buf_part, BROADEN_PART) end, desc = "Add Broader Note", buffer = buf },
+            { "<leader>vj", function() links.new(buf_part, NARROW_OPTS) end, desc = "Add Narrower Note", buffer = buf },
+            { "<leader>vk", function() links.new(buf_part, BROAD_OPTS) end, desc = "Add Broader Note", buffer = buf },
           })
         end,
       })
