@@ -7,9 +7,11 @@
 ---@field templates_folder string
 local Vault = {}
 
+local VaultMetatable = { __index = Vault }
+
 function Vault:exists()
   local stat = vim.uv.fs_stat(self.root)
-  return stat and stat.type == "directory"
+  return stat and stat.type == "directory" or false
 end
 
 function Vault:get_workspace_spec()
@@ -36,10 +38,15 @@ end
 
 local M = {}
 
+---@param opts my.obsidian_ext.Vault
 function M.new(opts)
-  local self = setmetatable(opts or {}, { __index = Vault })
-  self.root = vim.fs.normalize(self.root or "")
+  if M.is_vault_obj(opts) then return opts end
+  local self = setmetatable(vim.deepcopy(opts), VaultMetatable)
+  self.root = vim.fs.normalize(opts.root)
   return self
 end
+
+---@param val unknown
+function M.is_vault_obj(val) return getmetatable(val) == VaultMetatable end
 
 return M
