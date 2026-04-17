@@ -4,10 +4,6 @@ vim.keymap.set("n", "<leader><C-j>", ":rightbelow split<CR>", { desc = "Split Bo
 vim.keymap.set("n", "<leader><C-k>", ":leftabove split<CR>", { desc = "Split Top" })
 vim.keymap.set("n", "<leader><C-l>", ":rightbelow vsplit<CR>", { desc = "Split Right" })
 
--- Unbind `bnext` and `bprev`
-vim.keymap.del("n", "<S-h>")
-vim.keymap.del("n", "<S-l>")
-
 -- Unbind MiniFiles keymaps (from LazyVim)
 vim.keymap.del("n", "<leader>fm")
 vim.keymap.del("n", "<leader>fM")
