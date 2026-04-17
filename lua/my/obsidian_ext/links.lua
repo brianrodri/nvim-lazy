@@ -5,7 +5,7 @@ local H = {}
 local C = {}
 
 ---@param ... my.obsidian_ext.links.LinkOpts used to overwrite default opts with `vim.tbl_deep_extend("force", ...)`.
-function M.new(...)
+function M.between(...)
   local opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), ...)
 
   H.resolve_note(opts.src.note, function(src_note)
@@ -24,10 +24,10 @@ function M.new(...)
 end
 
 ---@param arg? my.obsidian_ext.links.ResolveNoteOpts
----@param callback fun(note: obsidian.Note)
-function H.resolve_note(arg, callback)
+---@param func fun(note: obsidian.Note)
+function H.resolve_note(arg, func)
   local safely_callback = function(note)
-    if note then callback(note) end
+    if note then func(note) end
   end
 
   if type(arg) == "number" then
@@ -61,10 +61,11 @@ function H.push_tagstack_item(jump_id, jump_pos)
   vim.fn.settagstack(win, { items = { { tagname = jump_id, from = jump_pos } } }, "t")
 end
 
----@type table<string, fun(callback: fun(note?: obsidian.Note))>
+---@type table<string, fun(func: fun(note?: obsidian.Note))>
 C.BUILTIN_RESOLVERS = {
-  named = function(callback) require("obsidian.actions").new(nil, callback) end,
-  unique = function(callback) callback(require("obsidian.actions").unique_note()) end,
+  picker = function(func) require("obsidian.picker").find_notes({ callback = func, no_default_mappings = true }) end,
+  create = function(func) require("obsidian.actions").new(nil, func) end,
+  unique = function(func) func(require("obsidian.actions").unique_note()) end,
 }
 
 ---@type my.obsidian_ext.links.LinkOpts
@@ -75,7 +76,7 @@ C.DEFAULT_LINK_OPTS = {
     insert_opts = { placement = "bot", section = { header = "Outgoing Links", level = 2, on_missing = "create" } },
   },
   dst = {
-    note = "named",
+    note = "create",
     insert_opts = { placement = "bot", section = { header = "Incoming Links", level = 2, on_missing = "create" } },
   },
 }

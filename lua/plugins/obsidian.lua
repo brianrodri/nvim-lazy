@@ -10,23 +10,45 @@ local VAULT = vaults.new({
   daily_notes_folder = "1. Journal/1. Daily",
   fleeting_notes_folder = "2. Fleeting",
   attachments_folder = "9. Meta/Attachments",
-  templates_folder = "9. Meta/Templates",
+  templates_folder = "9. Meta/Templates/obsidian-nvim",
 })
 
----@type my.obsidian_ext.links.LinkOpts
-local NARROW_OPTS = {
-  src_insert_opts = { section = { header = "Narrower", level = 2 } },
-  dst_insert_opts = { section = { header = "Broader", level = 2 } },
+local OPTS = {
+  ---@type my.obsidian_ext.links.LinkOpts
+  MAKE_BROAD = {
+    src = { insert_opts = { section = { header = "Broader", level = 2 } } },
+    dst = {
+      note = "create",
+      insert_opts = { template = "fleeting-note", section = { header = "Narrower", level = 2 } },
+    },
+  },
+  ---@type my.obsidian_ext.links.LinkOpts
+  MAKE_NARROW = {
+    src = { insert_opts = { section = { header = "Narrower", level = 2 } } },
+    dst = {
+      note = "create",
+      insert_opts = { template = "fleeting-note", section = { header = "Broader", level = 2 } },
+    },
+  },
+  ---@type my.obsidian_ext.links.LinkOpts
+  PICK_BROAD = {
+    src = { insert_opts = { section = { header = "Broader", level = 2 } } },
+    dst = {
+      note = "picker",
+      insert_opts = { template = "fleeting-note", section = { header = "Narrower", level = 2 } },
+    },
+  },
+  ---@type my.obsidian_ext.links.LinkOpts
+  PICK_NARROW = {
+    src = { insert_opts = { section = { header = "Narrower", level = 2 } } },
+    dst = {
+      note = "picker",
+      insert_opts = { template = "fleeting-note", section = { header = "Broader", level = 2 } },
+    },
+  },
+  ---@type snacks.picker.recent.Config
+  PICK_RECENT = { filter = { cwd = VAULT.root } },
 }
-
----@type my.obsidian_ext.links.LinkOpts
-local BROAD_OPTS = {
-  src_insert_opts = { section = { header = "Broader", level = 2 } },
-  dst_insert_opts = { section = { header = "Narrower", level = 2 } },
-}
-
----@type snacks.picker.recent.Config
-local RECENT_OPTS = { filter = { cwd = VAULT.root } }
 
 ---@module "lazy"
 ---@type LazySpec
@@ -48,11 +70,13 @@ return {
         pattern = "ObsidianNoteEnter",
         callback = function(args)
           local buf = args.buf
-          local buf_part = { src_note = buf }
+          local src_link_to = function(...) links.between({ src = { note = buf } }, ...) end
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() links.new(buf_part, NARROW_OPTS) end, desc = "Add Narrower Note", buffer = buf },
-            { "<leader>vk", function() links.new(buf_part, BROAD_OPTS) end, desc = "Add Broader Note", buffer = buf },
+            { "<leader>vj", function() src_link_to(OPTS.MAKE_NARROW) end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() src_link_to(OPTS.MAKE_BROAD) end, desc = "Make Broader Note", buffer = buf },
+            { "<leader>vJ", function() src_link_to(OPTS.PICK_NARROW) end, desc = "Pick Narrower Note", buffer = buf },
+            { "<leader>vK", function() src_link_to(OPTS.PICK_BROAD) end, desc = "Pick Broader Note", buffer = buf },
           })
         end,
       })
@@ -65,7 +89,7 @@ return {
       { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian" },
       { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract Note", mode = { "n", "v" } },
       { "<leader>vt", ":Obsidian today<cr>", desc = "Daily Note" },
-      { "<leader>vr", function() require("snacks.picker").recent(RECENT_OPTS) end, desc = "Recent Notes" },
+      { "<leader>vr", function() require("snacks.picker").recent(OPTS.PICK_RECENT) end, desc = "Recent Notes" },
       { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark" },
       { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark" },
     },
