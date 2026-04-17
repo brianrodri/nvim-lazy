@@ -1,18 +1,21 @@
 local function open(path)
+  local mini_files = require("mini.files")
+
   if vim.bo.filetype == "minifiles" then return end
-  require("mini.files").open(path, true)
+  mini_files.open(path, true)
 end
 
+---@param split_direction "belowright vertical"|"belowright horizontal"|"aboveleft horizontal"|"aboveleft vertical"
 local function open_in_split(split_direction)
-  local MiniFiles = require("mini.files")
+  local mini_files = require("mini.files")
 
-  local cur_win_id = MiniFiles.get_explorer_state().target_window
+  local cur_win_id = mini_files.get_explorer_state().target_window
   local new_win_id = vim.api.nvim_win_call(cur_win_id, function()
     vim.cmd(split_direction .. " split")
     return vim.api.nvim_get_current_win()
   end)
-  MiniFiles.set_target_window(new_win_id)
-  MiniFiles.go_in({ close_on_file = true })
+  mini_files.set_target_window(new_win_id)
+  mini_files.go_in({ close_on_file = true })
 end
 
 return {
