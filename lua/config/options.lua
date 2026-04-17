@@ -7,4 +7,3 @@ vim.o.ruler = true
 vim.o.number = true
 vim.o.relativenumber = false
 vim.o.colorcolumn = "+1"
-vim.opt.scrolloff = 0
