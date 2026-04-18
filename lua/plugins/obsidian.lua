@@ -1,31 +1,35 @@
-local bookmarks = require("my.obsidian_ext.bookmarks")
-local links = require("my.obsidian_ext.links")
-local vaults = require("my.obsidian_ext.vaults")
+local my_bookmarks = require("my.obsidian_ext.bookmarks")
+local my_links = require("my.obsidian_ext.links")
+local my_vaults = require("my.obsidian_ext.vaults")
 
-local VAULT = vaults.new({
+local H = {} -- HELPERS
+local C = {} -- CONSTANTS
+
+local BOOKMARK = my_bookmarks.new()
+local VAULT = my_vaults.new({
   name = "My Vault",
   root = "~/Vault",
   daily_notes_folder = "01-journal/01-daily",
   fleeting_notes_folder = "02-fleeting",
   attachments_folder = "09-meta/attachments",
   templates_folder = "09-meta/templates/obsidian-nvim",
+  frontmatter_extras = function() return { kind = "memo", ["created-on"] = H.now(), ["updated-on"] = H.now() } end,
+  frontmatter_sort = { "id", "kind", "subject", "title", "aliases", "tags", "created-on", "updated-on" },
 })
 
-local OPTS = {
-  CREATE = { dst = { note = "create" } },
-  PICKER = { dst = { note = "picker" } },
-  BROAD_SECTION = { insert_opts = { section = { header = "Broader" } } },
-  NARROW_SECTION = { insert_opts = { section = { header = "Narrower" } } },
-  RECENT_FILTER = { filter = { cwd = tostring(VAULT.root) } },
-}
+function H.now() return os.date(C.DATE_FMT) end
+function H.links_between(...) my_links.between(vim.tbl_deep_extend("force", {}, ...)) end
+function H.make_narrow(opts) H.links_between(C.CREATE, { src = C.NARROW_SECTION, dst = C.BROAD_SECTION }, opts) end
+function H.make_broad(opts) H.links_between(C.CREATE, { src = C.BROAD_SECTION, dst = C.NARROW_SECTION }, opts) end
+function H.pick_narrow(opts) H.links_between(C.PICKER, { src = C.NARROW_SECTION, dst = C.BROAD_SECTION }, opts) end
+function H.pick_broad(opts) H.links_between(C.PICKER, { src = C.BROAD_SECTION, dst = C.NARROW_SECTION }, opts) end
 
-local function links_between(...) links.between(vim.tbl_deep_extend("force", {}, ...)) end
-local function make_narrow(...) links_between(OPTS.CREATE, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, ...) end
-local function make_broad(...) links_between(OPTS.CREATE, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, ...) end
-local function pick_narrow(...) links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, ...) end
-local function pick_broad(...) links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, ...) end
-
-local BOOKMARK = bookmarks.new()
+C.DATE_FMT = "%Y-%m-%d %H:%M"
+C.CREATE = { dst = { note = "create" } }
+C.PICKER = { dst = { note = "picker" } }
+C.BROAD_SECTION = { insert_opts = { section = { header = "Broader" } } }
+C.NARROW_SECTION = { insert_opts = { section = { header = "Narrower" } } }
+C.RECENT_FILTER = { filter = { cwd = tostring(VAULT.root) } }
 
 ---@module "lazy"
 ---@type LazySpec
@@ -51,10 +55,10 @@ return {
           local link_opts = { src = { note = buf } }
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() pick_narrow(link_opts) end, desc = "Make Narrower Note", buffer = buf },
-            { "<leader>vk", function() pick_broad(link_opts) end, desc = "Make Broader Note", buffer = buf },
-            { "<leader>vJ", function() make_narrow(link_opts) end, desc = "Pick Narrower Note", buffer = buf },
-            { "<leader>vK", function() make_broad(link_opts) end, desc = "Pick Broader Note", buffer = buf },
+            { "<leader>vj", function() H.pick_narrow(link_opts) end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() H.pick_broad(link_opts) end, desc = "Make Broader Note", buffer = buf },
+            { "<leader>vJ", function() H.make_narrow(link_opts) end, desc = "Pick Narrower Note", buffer = buf },
+            { "<leader>vK", function() H.make_broad(link_opts) end, desc = "Pick Broader Note", buffer = buf },
           })
         end,
       })
@@ -68,7 +72,7 @@ return {
       { "<leader>vt", ":Obsidian today<cr>", desc = "Daily Note" },
       { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark" },
       { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark" },
-      { "<leader>vr", function() require("snacks.picker").recent(OPTS.RECENT_FILTER) end, desc = "Recent Notes" },
+      { "<leader>vr", function() require("snacks.picker").recent(C.RECENT_FILTER) end, desc = "Recent Notes" },
     },
   },
 }

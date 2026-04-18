@@ -1,3 +1,6 @@
+local M = {}
+local H = {}
+
 ---@class my.obsidian_ext.Vault
 ---@field name string
 ---@field root obsidian.Path
@@ -5,6 +8,8 @@
 ---@field daily_notes_folder obsidian.Path
 ---@field attachments_folder obsidian.Path
 ---@field templates_folder obsidian.Path
+---@field frontmatter_sort string[]
+---@field frontmatter fun(note: obsidian.Note): table<string, any>
 local Vault = {}
 
 local VaultMetatable = { __index = Vault }
@@ -26,9 +31,11 @@ function Vault:get_workspace_spec()
       },
       attachments = { folder = tostring(self.attachments_folder) },
       frontmatter = {
-        enabled = function(vault_path) return self.fleeting_notes_folder:is_parent_of(vault_path) end,
+        enabled = function(path) return self.fleeting_notes_folder:is_parent_of(path) end,
+        func = function(note) return vim.tbl_deep_extend("keep", self.frontmatter(note), H.plugin_frontmatter(note)) end,
+        sort = self.frontmatter_sort,
       },
-      note_id_func = function(...) return string.format("%s-%s", os.time(), require("obsidian.builtin").title_id(...)) end,
+      note_id_func = H.note_id_func,
       ---@type obsidian.config.TemplateOpts|{}
       templates = { folder = self.templates_folder, date_format = "YYYY-MM-DD", time_format = "HH:mm" },
       notes_subdir = tostring(self.fleeting_notes_folder),
@@ -36,8 +43,6 @@ function Vault:get_workspace_spec()
     },
   }
 end
-
-local M = {}
 
 ---@param opts my.obsidian_ext.VaultOpts
 function M.new(opts)
@@ -50,11 +55,22 @@ function M.new(opts)
   self.daily_notes_folder = self.root / opts.daily_notes_folder
   self.attachments_folder = self.root / opts.attachments_folder
   self.templates_folder = self.root / opts.templates_folder
+  self.frontmatter_sort = opts.frontmatter_sort
+  self.frontmatter = opts.frontmatter_extras
   return self
 end
 
----@param val unknown
-function M.is_vault_obj(val) return getmetatable(val) == VaultMetatable end
+function H.note_id_func(...)
+  local builtin = require("obsidian.builtin")
+
+  return string.format("%s-%s", os.time(), builtin.title_id(...))
+end
+
+function H.plugin_frontmatter(note)
+  local builtin = require("obsidian.builtin")
+
+  return builtin.frontmatter(note)
+end
 
 ---@class my.obsidian_ext.VaultOpts
 ---@field name string
@@ -63,5 +79,7 @@ function M.is_vault_obj(val) return getmetatable(val) == VaultMetatable end
 ---@field daily_notes_folder string
 ---@field attachments_folder string
 ---@field templates_folder string
+---@field frontmatter_extras fun(note: obsidian.Note): table<string, any>
+---@field frontmatter_sort string[]
 
 return M
