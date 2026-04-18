@@ -16,7 +16,7 @@ local OPTS = {
   PICKER = { dst = { note = "picker" } },
   BROAD_SECTION = { insert_opts = { section = { header = "Broader" } } },
   NARROW_SECTION = { insert_opts = { section = { header = "Narrower" } } },
-  RECENT_FILTER = { filter = { cwd = VAULT.root } },
+  RECENT_FILTER = { filter = { cwd = tostring(VAULT.root) } },
 }
 
 local function links_between(...) links.between(vim.tbl_deep_extend("force", {}, ...)) end
