@@ -2,8 +2,6 @@ local bookmarks = require("my.obsidian_ext.bookmarks")
 local links = require("my.obsidian_ext.links")
 local vaults = require("my.obsidian_ext.vaults")
 
-local BOOKMARK = bookmarks.new()
-
 local VAULT = vaults.new({
   name = "My Vault",
   root = "~/Vault",
@@ -27,6 +25,8 @@ local function make_broad(...) links_between(OPTS.CREATE, { src = OPTS.BROAD_SEC
 local function pick_narrow(...) links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, ...) end
 local function pick_broad(...) links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, ...) end
 
+local BOOKMARK = bookmarks.new()
+
 ---@module "lazy"
 ---@type LazySpec
 return {
@@ -34,6 +34,7 @@ return {
     "obsidian-nvim/obsidian.nvim",
     commit = "d6c0e5bc30937df0657c9953d135d0ebb3af7e00",
     dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
+    enabled = VAULT:exists(),
     opts = {
       workspaces = { VAULT:get_workspace_spec() },
       ui = { enable = false },
@@ -58,7 +59,6 @@ return {
         end,
       })
     end,
-    enabled = VAULT:exists(),
     keys = {
       { "<leader>vn", ":Obsidian new<cr>", desc = "New Note" },
       { "<leader>vs", ":Obsidian search<cr>", desc = "Grep Notes" },
