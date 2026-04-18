@@ -16,16 +16,16 @@ local VAULT = vaults.new({
 local OPTS = {
   CREATE = { dst = { note = "create" } },
   PICKER = { dst = { note = "picker" } },
-  BROAD_HEADER = { insert_opts = { section = { header = "Broader" } } },
-  NARROW_HEADER = { insert_opts = { section = { header = "Narrower" } } },
+  BROAD_SECTION = { insert_opts = { section = { header = "Broader" } } },
+  NARROW_SECTION = { insert_opts = { section = { header = "Narrower" } } },
   RECENT_FILTER = { filter = { cwd = VAULT.root } },
 }
 
 local function links_between(...) links.between(vim.tbl_deep_extend("force", {}, ...)) end
-local function make_narrow(...) links_between(OPTS.CREATE, { src = OPTS.NARROW_HEADER, dst = OPTS.BROAD_HEADER }, ...) end
-local function make_broad(...) links_between(OPTS.CREATE, { src = OPTS.BROAD_HEADER, dst = OPTS.NARROW_HEADER }, ...) end
-local function pick_narrow(...) links_between(OPTS.PICKER, { src = OPTS.NARROW_HEADER, dst = OPTS.BROAD_HEADER }, ...) end
-local function pick_broad(...) links_between(OPTS.PICKER, { src = OPTS.BROAD_HEADER, dst = OPTS.NARROW_HEADER }, ...) end
+local function make_narrow(...) links_between(OPTS.CREATE, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, ...) end
+local function make_broad(...) links_between(OPTS.CREATE, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, ...) end
+local function pick_narrow(...) links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, ...) end
+local function pick_broad(...) links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, ...) end
 
 ---@module "lazy"
 ---@type LazySpec
