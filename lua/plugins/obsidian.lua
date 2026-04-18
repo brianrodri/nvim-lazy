@@ -31,8 +31,8 @@ local function pick_broad(...) links_between(OPTS.PICKER, { src = OPTS.BROAD_HEA
 ---@type LazySpec
 return {
   {
-    "brianrodri/obsidian.nvim",
-    commit = "d0c2db162cca839df03c86505c3fbde098f4c630",
+    "obsidian-nvim/obsidian.nvim",
+    commit = "d6c0e5bc30937df0657c9953d135d0ebb3af7e00",
     dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
     opts = {
       workspaces = { VAULT:get_workspace_spec() },
