@@ -4,9 +4,9 @@ local M = {}
 local H = {}
 local C = {}
 
----@param ... my.obsidian_ext.links.LinkOpts used to overwrite default opts with `vim.tbl_deep_extend("force", ...)`.
-function M.between(...)
-  local opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), ...)
+---@param opts? my.obsidian_ext.links.LinkOpts
+function M.between(opts)
+  opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), opts or {})
 
   H.resolve_note(opts.src.note, function(src_note)
     if not src_note then return end

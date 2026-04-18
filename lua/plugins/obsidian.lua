@@ -7,48 +7,25 @@ local BOOKMARK = bookmarks.new()
 local VAULT = vaults.new({
   name = "My Vault",
   root = "~/Vault",
-  daily_notes_folder = "1. Journal/1. Daily",
-  fleeting_notes_folder = "2. Fleeting",
-  attachments_folder = "9. Meta/Attachments",
-  templates_folder = "9. Meta/Templates/obsidian-nvim",
+  daily_notes_folder = "01-journal/01-daily",
+  fleeting_notes_folder = "02-fleeting",
+  attachments_folder = "09-meta/attachments",
+  templates_folder = "09-meta/templates/obsidian-nvim",
 })
 
 local OPTS = {
-  ---@type my.obsidian_ext.links.LinkOpts
-  MAKE_BROAD = {
-    src = { insert_opts = { section = { header = "Broader", level = 2 } } },
-    dst = {
-      note = "create",
-      insert_opts = { template = "fleeting-note", section = { header = "Narrower", level = 2 } },
-    },
-  },
-  ---@type my.obsidian_ext.links.LinkOpts
-  MAKE_NARROW = {
-    src = { insert_opts = { section = { header = "Narrower", level = 2 } } },
-    dst = {
-      note = "create",
-      insert_opts = { template = "fleeting-note", section = { header = "Broader", level = 2 } },
-    },
-  },
-  ---@type my.obsidian_ext.links.LinkOpts
-  PICK_BROAD = {
-    src = { insert_opts = { section = { header = "Broader", level = 2 } } },
-    dst = {
-      note = "picker",
-      insert_opts = { template = "fleeting-note", section = { header = "Narrower", level = 2 } },
-    },
-  },
-  ---@type my.obsidian_ext.links.LinkOpts
-  PICK_NARROW = {
-    src = { insert_opts = { section = { header = "Narrower", level = 2 } } },
-    dst = {
-      note = "picker",
-      insert_opts = { template = "fleeting-note", section = { header = "Broader", level = 2 } },
-    },
-  },
-  ---@type snacks.picker.recent.Config
-  PICK_RECENT = { filter = { cwd = VAULT.root } },
+  CREATE = { dst = { note = "create", insert_opts = { template = "fleeting-note" } } },
+  PICKER = { dst = { note = "picker" } },
+  BROAD_HEADER = { insert_opts = { section = { header = "Broader" } } },
+  NARROW_HEADER = { insert_opts = { section = { header = "Narrower" } } },
+  RECENT_FILTER = { filter = { cwd = VAULT.root } },
 }
+
+local function links_between(...) links.between(vim.tbl_deep_extend("force", {}, ...)) end
+local function make_narrow(...) links_between(OPTS.CREATE, { src = OPTS.NARROW_HEADER, dst = OPTS.BROAD_HEADER }, ...) end
+local function make_broad(...) links_between(OPTS.CREATE, { src = OPTS.BROAD_HEADER, dst = OPTS.NARROW_HEADER }, ...) end
+local function pick_narrow(...) links_between(OPTS.PICKER, { src = OPTS.NARROW_HEADER, dst = OPTS.BROAD_HEADER }, ...) end
+local function pick_broad(...) links_between(OPTS.PICKER, { src = OPTS.BROAD_HEADER, dst = OPTS.NARROW_HEADER }, ...) end
 
 ---@module "lazy"
 ---@type LazySpec
@@ -70,13 +47,13 @@ return {
         pattern = "ObsidianNoteEnter",
         callback = function(args)
           local buf = args.buf
-          local src_link_to = function(...) links.between({ src = { note = buf } }, ...) end
+          local link_opts = { src = { note = buf } }
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() src_link_to(OPTS.MAKE_NARROW) end, desc = "Make Narrower Note", buffer = buf },
-            { "<leader>vk", function() src_link_to(OPTS.MAKE_BROAD) end, desc = "Make Broader Note", buffer = buf },
-            { "<leader>vJ", function() src_link_to(OPTS.PICK_NARROW) end, desc = "Pick Narrower Note", buffer = buf },
-            { "<leader>vK", function() src_link_to(OPTS.PICK_BROAD) end, desc = "Pick Broader Note", buffer = buf },
+            { "<leader>vj", function() pick_narrow(link_opts) end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() pick_broad(link_opts) end, desc = "Make Broader Note", buffer = buf },
+            { "<leader>vJ", function() make_narrow(link_opts) end, desc = "Pick Narrower Note", buffer = buf },
+            { "<leader>vK", function() make_broad(link_opts) end, desc = "Pick Broader Note", buffer = buf },
           })
         end,
       })
@@ -89,9 +66,9 @@ return {
       { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian" },
       { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract Note", mode = { "n", "v" } },
       { "<leader>vt", ":Obsidian today<cr>", desc = "Daily Note" },
-      { "<leader>vr", function() require("snacks.picker").recent(OPTS.PICK_RECENT) end, desc = "Recent Notes" },
       { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark" },
       { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark" },
+      { "<leader>vr", function() require("snacks.picker").recent(OPTS.RECENT_FILTER) end, desc = "Recent Notes" },
     },
   },
 }
