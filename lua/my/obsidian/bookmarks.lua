@@ -1,33 +1,20 @@
 local my_utils = require("my.obsidian.utils")
 
+local H = {}
+local M = {}
+
 ---@class my.obsidian.Bookmark
 ---@field note? obsidian.Note
 local Bookmark = {}
 
 function Bookmark:open_or_pick()
-  local obsidian_note = require("obsidian.note")
-  local obsidian_picker = require("obsidian.picker")
-
-  if not self.note then
-    obsidian_picker.find_notes({
-      callback = function(path)
-        local ok, picked = pcall(obsidian_note.from_file, path)
-        if ok and picked then
-          self.note = picked
-          self.note:open({ sync = true })
-        end
-      end,
-    })
-  else
-    self.note:open({ sync = true })
-  end
+  local picker = require("obsidian.picker")
+  return H.ensure_open(self.note) or picker.find_notes({ callback = function(p) self.note = H.ensure_open(p) end })
 end
 
 ---@param bufnr? integer
 function Bookmark:toggle_buffer(bufnr)
-  local obsidian_api = require("obsidian.api")
-
-  local buf_note = obsidian_api.current_note(bufnr)
+  local buf_note = require("obsidian.api").current_note(bufnr)
   if buf_note and self.note and my_utils.is_equal(buf_note, self.note) then
     self.note = nil
   else
@@ -36,16 +23,22 @@ function Bookmark:toggle_buffer(bufnr)
 end
 
 function Bookmark:append_text()
-  local obsidian_api = require("obsidian.api")
-
   if not self.note then return end
-  local ok, input = pcall(obsidian_api.input, "Append:")
+  local ok, input = pcall(require("obsidian.api").input, "Append:")
   local text = vim.trim(ok and input or "")
   if text == "" then return end
   self.note:write({ update_content = function(lines) return vim.list_extend(lines, { text }) end })
 end
 
-local M = {}
+---@param val? obsidian.Note|string
+---@return obsidian.Note?
+function H.ensure_open(val)
+  if not val then return nil end
+  if type(val) ~= "string" then val = tostring(val.path) end
+  local ok, picked = pcall(require("obsidian.note").from_file, val)
+  if ok and picked then picked:open({ sync = true }) end
+  return ok and picked or nil
+end
 
 ---@return my.obsidian.Bookmark
 function M.new() return setmetatable({}, { __index = Bookmark }) end
