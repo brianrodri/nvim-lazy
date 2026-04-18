@@ -30,10 +30,7 @@ function Vault:get_workspace_spec()
       },
       attachments = { folder = self.attachments_folder },
       frontmatter = { enabled = function(rel_path) return vim.fs.dirname(rel_path) == self.fleeting_notes_folder end },
-      note_id_func = function(title, path)
-        local builtin = require("obsidian.builtin")
-        return string.format("%s-%s", os.time(), builtin.title_id(title, path))
-      end,
+      note_id_func = function(...) return string.format("%s-%s", os.time(), require("obsidian.builtin").title_id(...)) end,
       ---@type obsidian.config.TemplateOpts|{}
       templates = { folder = self.templates_folder },
       notes_subdir = self.fleeting_notes_folder,
