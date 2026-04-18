@@ -1,18 +1,19 @@
----@type table<string, string>
-local NORMALIZED_PATH_CACHE = {}
-
----@param path? string|obsidian.Path
-local function normalized(path)
-  if not path then return nil end
-  path = tostring(path)
-  if not NORMALIZED_PATH_CACHE[path] then NORMALIZED_PATH_CACHE[path] = vim.fs.normalize(path) end
-  return NORMALIZED_PATH_CACHE[path]
-end
-
-local M = {}
+local M = {} -- PUBLIC API
+local C = {} -- CONSTANTS
 
 ---@param note1 obsidian.Note
 ---@param note2 obsidian.Note
-function M.is_equal(note1, note2) return normalized(note1.path) == normalized(note2.path) end
+function M.is_equal(note1, note2) return M.normalized(note1.path) == M.normalized(note2.path) end
+
+---@param path? string|obsidian.Path
+function M.normalized(path)
+  if not path then return nil end
+  path = tostring(path)
+  if not C.CACHE[path] then C.CACHE[path] = vim.fs.normalize(path) end
+  return C.CACHE[path]
+end
+
+---@type table<string, string>
+C.CACHE = {}
 
 return M
