@@ -3,15 +3,7 @@ local my_utils = require("my.obsidian.utils")
 local M = {}
 local H = {}
 
----@class my.obsidian_ext.Vault
----@field name string
----@field root string
----@field fleeting_notes_folder string
----@field daily_notes_folder string
----@field attachments_folder string
----@field templates_folder string
----@field frontmatter_sort string[]
----@field frontmatter fun(note: obsidian.Note): table<string, any>
+---@class my.obsidian.Vault: my.obsidian.VaultOpts
 local Vault = {}
 
 function Vault:exists()
@@ -34,8 +26,8 @@ function Vault:get_workspace_spec()
       },
       attachments = { folder = self.attachments_folder },
       frontmatter = {
-        enabled = function(path) return require("obsidian.path").new(self.fleeting_notes_folder):is_parent_of(path) end,
-        func = function(note) return vim.tbl_deep_extend("keep", self.frontmatter(note), H.plugin_frontmatter(note)) end,
+        enabled = function(p) return require("obsidian.path").new(self.fleeting_notes_folder):is_parent_of(p) end,
+        func = function(n) return vim.tbl_deep_extend("force", H.plugin_frontmatter(n), self.frontmatter_extras(n)) end,
         sort = self.frontmatter_sort,
       },
       note_id_func = H.note_id_func,
@@ -47,17 +39,11 @@ function Vault:get_workspace_spec()
   }
 end
 
----@param opts my.obsidian_ext.VaultOpts
+---@param opts my.obsidian.VaultOpts
 function M.new(opts)
-  local self = setmetatable({}, { __index = Vault })
-  self.name = opts.name
-  self.root = my_utils.normalized(opts.root) or ""
-  self.fleeting_notes_folder = opts.fleeting_notes_folder
-  self.daily_notes_folder = opts.daily_notes_folder
-  self.attachments_folder = opts.attachments_folder
-  self.templates_folder = opts.templates_folder
-  self.frontmatter_sort = opts.frontmatter_sort
-  self.frontmatter = opts.frontmatter_extras
+  ---@type my.obsidian.Vault
+  local self = setmetatable(vim.tbl_extend("force", {}, opts), { __index = Vault })
+  self.root = my_utils.resolve_path(self.root) or ""
   return self
 end
 
@@ -65,7 +51,7 @@ function H.note_id_func(...) return string.format("%s-%s", os.time(), require("o
 
 function H.plugin_frontmatter(note) return require("obsidian.builtin").frontmatter(note) end
 
----@class my.obsidian_ext.VaultOpts
+---@class my.obsidian.VaultOpts
 ---@field name string
 ---@field root string
 ---@field fleeting_notes_folder string
