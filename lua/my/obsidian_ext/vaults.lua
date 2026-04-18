@@ -12,8 +12,6 @@ local H = {}
 ---@field frontmatter fun(note: obsidian.Note): table<string, any>
 local Vault = {}
 
-local VaultMetatable = { __index = Vault }
-
 function Vault:exists() return self.root:is_dir() end
 
 function Vault:get_workspace_spec()
@@ -48,7 +46,7 @@ end
 function M.new(opts)
   local Path = require("obsidian.path")
 
-  local self = setmetatable({}, VaultMetatable)
+  local self = setmetatable({}, { __index = Vault })
   self.name = opts.name
   self.root = Path.new(opts.root):resolve({ strict = true })
   self.fleeting_notes_folder = self.root / opts.fleeting_notes_folder
