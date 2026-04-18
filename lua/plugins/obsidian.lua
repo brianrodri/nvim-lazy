@@ -14,7 +14,7 @@ local VAULT = vaults.new({
 })
 
 local OPTS = {
-  CREATE = { dst = { note = "create", insert_opts = { template = "fleeting-note" } } },
+  CREATE = { dst = { note = "create" } },
   PICKER = { dst = { note = "picker" } },
   BROAD_HEADER = { insert_opts = { section = { header = "Broader" } } },
   NARROW_HEADER = { insert_opts = { section = { header = "Narrower" } } },
