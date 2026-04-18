@@ -21,7 +21,6 @@ function Vault:get_workspace_spec()
     path = self.root,
     ---@diagnostic disable-next-line: missing-fields
     overrides = {
-      note = { template = "fleeting-note.md" },
       daily_notes = {
         folder = self.daily_notes_folder,
         workdays_only = false,
