@@ -1,4 +1,4 @@
-local my_notes = require("my.obsidian_ext.notes")
+local my_utils = require("my.obsidian.utils")
 
 local M = {}
 local H = {}
@@ -51,7 +51,7 @@ end
 function M.new(opts)
   local self = setmetatable({}, { __index = Vault })
   self.name = opts.name
-  self.root = my_notes.normalized(opts.root) or ""
+  self.root = my_utils.normalized(opts.root) or ""
   self.fleeting_notes_folder = opts.fleeting_notes_folder
   self.daily_notes_folder = opts.daily_notes_folder
   self.attachments_folder = opts.attachments_folder

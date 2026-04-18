@@ -1,6 +1,6 @@
-local my_bookmarks = require("my.obsidian_ext.bookmarks")
-local my_links = require("my.obsidian_ext.links")
-local my_vaults = require("my.obsidian_ext.vaults")
+local my_bookmarks = require("my.obsidian.bookmarks")
+local my_links = require("my.obsidian.links")
+local my_vaults = require("my.obsidian.vaults")
 
 local H = {} -- HELPERS
 local C = {} -- CONSTANTS

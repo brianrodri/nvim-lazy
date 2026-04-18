@@ -1,6 +1,6 @@
-local notes = require("my.obsidian_ext.notes")
+local my_utils = require("my.obsidian.utils")
 
----@class my.obsidian_ext.Bookmark
+---@class my.obsidian.Bookmark
 ---@field note? obsidian.Note
 local Bookmark = {}
 
@@ -28,7 +28,7 @@ function Bookmark:toggle_buffer(bufnr)
   local obsidian_api = require("obsidian.api")
 
   local buf_note = obsidian_api.current_note(bufnr)
-  if buf_note and self.note and notes.is_equal(buf_note, self.note) then
+  if buf_note and self.note and my_utils.is_equal(buf_note, self.note) then
     self.note = nil
   else
     self.note = buf_note
@@ -47,7 +47,7 @@ end
 
 local M = {}
 
----@return my.obsidian_ext.Bookmark
+---@return my.obsidian.Bookmark
 function M.new() return setmetatable({}, { __index = Bookmark }) end
 
 return M
