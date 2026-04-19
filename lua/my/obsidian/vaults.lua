@@ -32,7 +32,7 @@ function Vault:get_workspace_spec()
       },
       note_id_func = H.note_id_func,
       ---@type obsidian.config.TemplateOpts|{}
-      templates = { folder = self.templates_folder, date_format = "YYYY-MM-DD", time_format = "HH:mm" },
+      templates = { folder = self.templates_folder },
       notes_subdir = tostring(self.fleeting_notes_folder),
       new_notes_location = "notes_subdir",
     },
