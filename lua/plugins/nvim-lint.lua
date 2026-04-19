@@ -2,8 +2,23 @@
 ---@type LazySpec
 return {
   {
+    "stevearc/conform.nvim",
+    lazy = false,
+    ---@type conform.setupOpts
+    opts = {
+      formatters = {
+        mdformat = { cwd = require("conform.util").root_file({ ".mdformat.toml" }) },
+      },
+    },
+  },
+
+  {
     "mfussenegger/nvim-lint",
-    -- `markdownlint-cli2` depends on `fname` for finding the root config file (`.markdownlint.json`).
-    opts = { linters = { ["markdownlint-cli2"] = { append_fname = true, stdin = false } } },
+    opts = {
+      lazy = false,
+      ---@module "lint"
+      ---@type table<string, lint.Linter|{}>
+      linters = { ["markdownlint-cli2"] = { append_fname = true, stdin = false } },
+    },
   },
 }
