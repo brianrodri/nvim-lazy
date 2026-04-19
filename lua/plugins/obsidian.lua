@@ -13,7 +13,8 @@ local VAULT = my_vaults.new({
   fleeting_notes_folder = "02-fleeting",
   attachments_folder = "09-meta/attachments",
   templates_folder = "09-meta/templates/obsidian-nvim",
-  frontmatter_extras = function() return { kind = "memo", ["created-on"] = H.now(), ["updated-on"] = H.now() } end,
+  frontmatter_defaults = function() return { kind = "memo", ["created-on"] = H.now() } end,
+  frontmatter_overrides = function() return { ["updated-on"] = H.now() } end,
   frontmatter_sort = { "id", "kind", "subject", "title", "aliases", "tags", "created-on", "updated-on" },
 })
 

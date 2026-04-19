@@ -27,7 +27,10 @@ function Vault:get_workspace_spec()
       attachments = { folder = self.attachments_folder },
       frontmatter = {
         enabled = function(p) return require("obsidian.path").new(self.fleeting_notes_folder):is_parent_of(p) end,
-        func = function(n) return vim.tbl_deep_extend("force", H.plugin_frontmatter(n), self.frontmatter_extras(n)) end,
+        func = function(n)
+          local builtin = require("obsidian.builtin").frontmatter(n)
+          return vim.tbl_deep_extend("force", {}, self.frontmatter_defaults(n), builtin, self.frontmatter_overrides(n))
+        end,
         sort = self.frontmatter_sort,
       },
       note_id_func = H.note_id_func,
@@ -58,7 +61,8 @@ function H.plugin_frontmatter(note) return require("obsidian.builtin").frontmatt
 ---@field daily_notes_folder string
 ---@field attachments_folder string
 ---@field templates_folder string
----@field frontmatter_extras fun(note: obsidian.Note): table<string, any>
+---@field frontmatter_overrides fun(note: obsidian.Note): table<string, any>
+---@field frontmatter_defaults fun(note: obsidian.Note): table<string, any>
 ---@field frontmatter_sort string[]
 
 return M
