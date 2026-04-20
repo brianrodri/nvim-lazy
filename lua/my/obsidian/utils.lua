@@ -28,9 +28,7 @@ function M.push_tagstack_truncating_jump_from_note(current_location, destination
   if winnum < 0 then return end
   local bufnum = current_location[1] or -1
   if bufnum < 0 then return end
-  -- TODO: What does the tagname of "Go to Definition" look like for Markdown links?
-  local tagname = destination.id
-  vim.fn.settagstack(winnum, { items = { { tagname = tagname, from = current_location } } }, "t")
+  vim.fn.settagstack(winnum, { items = { { tagname = vim.fn.expand("<cword>"), from = current_location } } }, "t")
 end
 
 ---@type table<string, string>
