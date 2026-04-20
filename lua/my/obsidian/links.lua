@@ -7,9 +7,9 @@ local C = {}
 ---@param opts? my.obsidian.links.LinkOpts
 function M.insert_cross_references(opts)
   opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), opts or {})
-  H.resolve_strategy(vim.tbl_get(opts, "src", "note"), function(fwd_note)
+  H.resolve_strategy(opts.dst.note, function(fwd_note)
     if not fwd_note then return end
-    H.resolve_strategy(vim.tbl_get(opts, "dst", "note"), function(rev_note)
+    H.resolve_strategy(opts.src.note, function(rev_note)
       if not rev_note or MyObsidianUtils.is_equal(fwd_note, rev_note) then return end
       local fwd_link_pos = H.insert_link(fwd_note, rev_note, opts.src.insert_opts)
       local rev_link_pos = H.insert_link(rev_note, fwd_note, opts.dst.insert_opts)
@@ -33,6 +33,7 @@ function H.resolve_strategy(strategy, user_callback)
     assert(vim.is_callable(strategy_impl), "not a strategy: " .. strategy)
     strategy_impl(user_callback)
   else ---@cast strategy -integer|string
+    assert(require("obsidian.note").is_note_obj(strategy), "not a note: " .. vim.inspect(strategy))
     user_callback(strategy)
   end
 end

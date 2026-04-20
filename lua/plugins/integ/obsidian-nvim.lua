@@ -21,17 +21,17 @@ local VAULT = my_vaults.new({
 local OPTS = {
   CREATE = { dst = { note = "create" } },
   PICKER = { dst = { note = "picker" } },
-  BROAD_SECTION = { insert_opts = { section = { header = "Broader" } } },
-  NARROW_SECTION = { insert_opts = { section = { header = "Narrower" } } },
+  BROADER = { insert_opts = { section = { header = "Broader" } } },
+  NARROWER = { insert_opts = { section = { header = "Narrower" } } },
   RECENT_FILTER = { filter = { cwd = tostring(VAULT.root) } },
 }
 
 function H.now() return os.date("%Y-%m-%d %H:%M") end
-function H.make_narrow() H.links_between(OPTS.CREATE, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }) end
-function H.make_broad() H.links_between(OPTS.CREATE, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }) end
-function H.pick_narrow() H.links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }) end
-function H.pick_broad() H.links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }) end
-function H.links_between(...) my_links.insert_cross_references(vim.tbl_deep_extend("error", {}, ...)) end
+function H.write_xref_links(...) my_links.insert_cross_references(vim.tbl_deep_extend("error", {}, ...)) end
+function H.make_narrower_note() H.write_xref_links(OPTS.CREATE, { src = OPTS.NARROWER, dst = OPTS.BROADER }) end
+function H.make_broader_note() H.write_xref_links(OPTS.CREATE, { src = OPTS.BROADER, dst = OPTS.NARROWER }) end
+function H.pick_narrower_note() H.write_xref_links(OPTS.PICKER, { src = OPTS.NARROWER, dst = OPTS.BROADER }) end
+function H.pick_broader_note() H.write_xref_links(OPTS.PICKER, { src = OPTS.BROADER, dst = OPTS.NARROWER }) end
 
 ---@module "lazy"
 ---@type LazySpec
@@ -57,10 +57,10 @@ return {
           local buf = args.buf
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() H.pick_narrow() end, desc = "Make Narrower Note", buffer = buf },
-            { "<leader>vk", function() H.pick_broad() end, desc = "Make Broader Note", buffer = buf },
-            { "<leader>vJ", function() H.make_narrow() end, desc = "Pick Narrower Note", buffer = buf },
-            { "<leader>vK", function() H.make_broad() end, desc = "Pick Broader Note", buffer = buf },
+            { "<leader>vJ", function() H.pick_narrower_note() end, desc = "Pick Narrower Note", buffer = buf },
+            { "<leader>vK", function() H.pick_broader_note() end, desc = "Pick Broader Note", buffer = buf },
+            { "<leader>vj", function() H.make_narrower_note() end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() H.make_broader_note() end, desc = "Make Broader Note", buffer = buf },
           })
         end,
       })
