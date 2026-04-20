@@ -1,69 +1,60 @@
-local my_utils = require("my.obsidian.utils")
+local MyObsidianUtils = require("my.obsidian.utils")
 
 local M = {}
 local H = {}
 local C = {}
 
 ---@param opts? my.obsidian.links.LinkOpts
-function M.between(opts)
+function M.insert_cross_references(opts)
   opts = vim.tbl_deep_extend("force", vim.deepcopy(C.DEFAULT_LINK_OPTS), opts or {})
-  H.resolve_strategy(opts.src.note, function(src_note)
-    if not src_note then return end
-    H.resolve_strategy(opts.dst.note, function(dst_note)
-      if not dst_note or my_utils.is_equal(src_note, dst_note) then return end
-      local src_pos = H.insert_link(src_note, dst_note, opts.src.insert_opts)
-      local dst_pos = H.insert_link(dst_note, src_note, opts.dst.insert_opts)
-      H.push_tagstack_item(dst_note.id, src_pos)
-      vim.schedule(function() dst_note:open({ sync = true, line = dst_pos[2], col = dst_pos[3] }) end)
+  H.resolve_strategy(vim.tbl_get(opts, "src", "note"), function(fwd_note)
+    if not fwd_note then return end
+    H.resolve_strategy(vim.tbl_get(opts, "dst", "note"), function(rev_note)
+      if not rev_note or MyObsidianUtils.is_equal(fwd_note, rev_note) then return end
+      local fwd_link_pos = H.insert_link(fwd_note, rev_note, opts.src.insert_opts)
+      local rev_link_pos = H.insert_link(rev_note, fwd_note, opts.dst.insert_opts)
+
+      -- As if I pressed `CTRL-]` on the newly-created link to navigate into the destination note.
+      MyObsidianUtils.push_tagstack_truncating_jump_from_note(fwd_link_pos, rev_note)
+
+      -- When I press `CTRL-T` after navigating to the destination, then the cursor will return to aforementioned link.
+      vim.schedule(function() rev_note:open({ sync = true, line = rev_link_pos[2], col = rev_link_pos[3] }) end)
     end)
   end)
 end
 
----@param arg? my.obsidian.links.ResolveNoteOpts
----@param func fun(note: obsidian.Note)
-function H.resolve_strategy(arg, func)
-  local resolve = function(note)
-    if note then func(note) end
-  end
-
-  if type(arg) == "number" then
-    resolve(require("obsidian.api").current_note(arg))
-  elseif type(arg) == "string" then
-    local builtin_resolver = assert(C.BUILTIN_RESOLVERS[arg], "invalid value: " .. arg)
-    builtin_resolver(resolve)
-  else ---@cast arg -string|integer
-    resolve(arg)
+---@param strategy? my.obsidian.links.ResolveStrategy
+---@param user_callback fun(note?: obsidian.Note)
+function H.resolve_strategy(strategy, user_callback)
+  if type(strategy) == "number" then
+    user_callback(require("obsidian.api").current_note(strategy))
+  elseif type(strategy) == "string" then
+    local strategy_impl = C.STRATEGY_CALLBACKS[strategy]
+    assert(vim.is_callable(strategy_impl), "not a strategy: " .. strategy)
+    strategy_impl(user_callback)
+  else ---@cast strategy -integer|string
+    user_callback(strategy)
   end
 end
 
----@param note_mut obsidian.Note
----@param link_target obsidian.Note
+---@param note_to_change obsidian.Note
+---@param destination obsidian.Note
 ---@param opts obsidian.note.InsertTextOpts
----@return [number, number, number, number] pos as returned by |getpos()| (`bufnr`, `line`, `col`, `off`).
-function H.insert_link(note_mut, link_target, opts)
-  local text = C.LINK_FMT:format(link_target:format_link())
-  local line = require("obsidian.note").from_file(note_mut.path):insert_text(text, opts)
+---@return [number, number, number, number] insert_position |getpos| list for the new link: `[bufnum, lnum, col, off]`.
+function H.insert_link(note_to_change, destination, opts)
+  local text = C.LINK_FMT:format(destination:format_link())
+  local line = require("obsidian.note").from_file(note_to_change.path):insert_text(text, opts)
   assert(line > 0, "Failed to insert text")
-  return { note_mut.bufnr or -1, line, text:len() + 1, 0 }
-end
-
----@param jump_id? string
----@param jump_pos [number, number, number, number] as returned by |getpos()| (`bufnr`, `line`, `col`, `off`).
-function H.push_tagstack_item(jump_id, jump_pos)
-  local buf = jump_pos[1] or -1
-  if buf < 0 then return end
-  local win = (buf < 0 and -1) or (buf > 0 and vim.fn.bufwinid(buf)) or 0
-  if win < 0 then return end
-  vim.fn.settagstack(win, { items = { { tagname = jump_id, from = jump_pos } } }, "t")
+  return { note_to_change.bufnr or -1, line, text:len() + 1, 0 }
 end
 
 C.LINK_FMT = "- %s"
 
 ---@type table<string, fun(func: fun(note?: obsidian.Note))>
-C.BUILTIN_RESOLVERS = {
-  picker = function(func) require("obsidian.picker").find_notes({ callback = func, no_default_mappings = true }) end,
+C.STRATEGY_CALLBACKS = {
   create = function(func) require("obsidian.actions").new(nil, func) end,
   unique = function(func) func(require("obsidian.actions").unique_note()) end,
+  picker = function(func) require("obsidian.picker").find_notes({ callback = func, no_default_mappings = true }) end,
 }
 
 ---@type my.obsidian.links.LinkOpts
@@ -78,14 +69,15 @@ C.DEFAULT_LINK_OPTS = {
   },
 }
 
---- Resolve a note by predefined strategy name (string), buffer number (integer), or explicit note.
----@alias my.obsidian.links.ResolveNoteOpts
----| string
+---@alias my.obsidian.links.ResolveStrategy
+---| "create"
+---| "unique"
+---| "picker"
 ---| integer
 ---| obsidian.Note
 
 ---@class my.obsidian.links.NoteOpts
----@field note? my.obsidian.links.ResolveNoteOpts|{}
+---@field note? my.obsidian.links.ResolveStrategy|{}
 ---@field insert_opts? obsidian.note.InsertTextOpts|{}
 
 ---@class my.obsidian.links.LinkOpts

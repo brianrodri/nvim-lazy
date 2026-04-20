@@ -31,7 +31,7 @@ function H.make_narrow() H.links_between(OPTS.CREATE, { src = OPTS.NARROW_SECTIO
 function H.make_broad() H.links_between(OPTS.CREATE, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }) end
 function H.pick_narrow() H.links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }) end
 function H.pick_broad() H.links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }) end
-function H.links_between(...) my_links.between(vim.tbl_deep_extend("error", {}, ...)) end
+function H.links_between(...) my_links.insert_cross_references(vim.tbl_deep_extend("error", {}, ...)) end
 
 ---@module "lazy"
 ---@type LazySpec
