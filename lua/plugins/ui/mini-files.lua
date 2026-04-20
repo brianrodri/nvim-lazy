@@ -43,15 +43,11 @@ return {
       })
       vim.api.nvim_create_autocmd("User", {
         pattern = "MiniFilesActionRename",
-        callback = vim.schedule_wrap(
-          function(event) require("snacks.rename").on_rename_file(event.data.from, event.data.to) end
-        ),
+        callback = function(event) require("snacks").rename.on_rename_file(event.data.from, event.data.to) end,
       })
       vim.api.nvim_create_autocmd("User", {
         pattern = "MiniFilesActionDelete",
-        callback = vim.schedule_wrap(
-          function(event) require("snacks.bufdelete").delete({ file = event.data.from }) end
-        ),
+        callback = function(event) require("snacks").bufdelete.delete({ file = event.data.from, force = true }) end,
       })
     end,
   },
