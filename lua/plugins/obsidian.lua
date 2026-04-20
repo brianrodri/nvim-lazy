@@ -26,17 +26,12 @@ local OPTS = {
   RECENT_FILTER = { filter = { cwd = tostring(VAULT.root) } },
 }
 
----@param ... my.obsidian.links.LinkOpts
-function H.links_between(...)
-  local opts = vim.tbl_deep_extend("error", {}, ...)
-  my_links.between(opts)
-end
-
 function H.now() return os.date("%Y-%m-%d %H:%M") end
-function H.make_narrow(opts) H.links_between(OPTS.CREATE, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, opts) end
-function H.make_broad(opts) H.links_between(OPTS.CREATE, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, opts) end
-function H.pick_narrow(opts) H.links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }, opts) end
-function H.pick_broad(opts) H.links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }, opts) end
+function H.make_narrow() H.links_between(OPTS.CREATE, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }) end
+function H.make_broad() H.links_between(OPTS.CREATE, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }) end
+function H.pick_narrow() H.links_between(OPTS.PICKER, { src = OPTS.NARROW_SECTION, dst = OPTS.BROAD_SECTION }) end
+function H.pick_broad() H.links_between(OPTS.PICKER, { src = OPTS.BROAD_SECTION, dst = OPTS.NARROW_SECTION }) end
+function H.links_between(...) my_links.between(vim.tbl_deep_extend("error", {}, ...)) end
 
 ---@module "lazy"
 ---@type LazySpec
@@ -49,38 +44,39 @@ return {
     enabled = VAULT:exists(),
     opts = {
       workspaces = { VAULT:get_workspace_spec() },
+      -- See: |render-markdown-info-obsidian.nvim|
       ui = { enable = false },
       -- TODO: Delete after 4.0.0 release
       legacy_commands = false,
     },
-    config = function(_, opts)
-      require("obsidian").setup(opts)
+    init = function()
       vim.api.nvim_create_autocmd("User", {
-        group = vim.api.nvim_create_augroup("MyObsidianKeymaps", { clear = true }),
+        group = vim.api.nvim_create_augroup("my.adapters.obsidian.ObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
           local buf = args.buf
-          local link_opts = { src = { note = buf } }
           require("which-key").add({
             { "<leader>vp", function() BOOKMARK:toggle_buffer(buf) end, desc = "Pick Bookmark", buffer = buf },
-            { "<leader>vj", function() H.pick_narrow(link_opts) end, desc = "Make Narrower Note", buffer = buf },
-            { "<leader>vk", function() H.pick_broad(link_opts) end, desc = "Make Broader Note", buffer = buf },
-            { "<leader>vJ", function() H.make_narrow(link_opts) end, desc = "Pick Narrower Note", buffer = buf },
-            { "<leader>vK", function() H.make_broad(link_opts) end, desc = "Pick Broader Note", buffer = buf },
+            { "<leader>vj", function() H.pick_narrow() end, desc = "Make Narrower Note", buffer = buf },
+            { "<leader>vk", function() H.pick_broad() end, desc = "Make Broader Note", buffer = buf },
+            { "<leader>vJ", function() H.make_narrow() end, desc = "Pick Narrower Note", buffer = buf },
+            { "<leader>vK", function() H.make_broad() end, desc = "Pick Broader Note", buffer = buf },
           })
         end,
       })
     end,
     keys = {
-      { "<leader>vn", ":Obsidian new<cr>", desc = "New Note" },
-      { "<leader>vs", ":Obsidian search<cr>", desc = "Grep Notes" },
-      { "<leader>vf", ":Obsidian quick_switch<cr>", desc = "Find Notes" },
-      { "<leader>vo", ":Obsidian open<cr>", desc = "Open Obsidian" },
-      { "<leader>vy", ":Obsidian extract_note<cr>", desc = "Extract Note", mode = { "n", "v" } },
-      { "<leader>vt", ":Obsidian today<cr>", desc = "Daily Note" },
+      { "<leader>vn", function() pcall(require("obsidian.actions").new) end, desc = "New Note" },
+      { "<leader>vs", function() pcall(require("obsidian.picker").grep_notes) end, desc = "Grep Notes" },
+      { "<leader>vf", function() pcall(require("obsidian.picker").find_notes) end, desc = "Find Notes" },
+      { "<leader>vt", function() require("obsidian.daily").today():open() end, desc = "Daily Note" },
       { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark" },
       { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark" },
-      { "<leader>vr", function() require("snacks.picker").recent(OPTS.RECENT_FILTER) end, desc = "Recent Notes" },
+      {
+        "<leader>vr",
+        function() pcall(require("snacks.picker").recent, OPTS.RECENT_FILTER) end,
+        desc = "Recent Notes",
+      },
     },
   },
 }
