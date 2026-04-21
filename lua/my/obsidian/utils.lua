@@ -1,10 +1,6 @@
 local M = {} -- PUBLIC API
 local C = {} -- CONSTANTS
 
-function M.format_func_call(func_name, ...)
-  return string.format("%s(%s)", func_name, vim.iter({ ... }):map(vim.inspect):join(", "))
-end
-
 ---@param note1 obsidian.Note
 ---@param note2 obsidian.Note
 function M.is_equal(note1, note2) return M.resolve_path(note1.path) == M.resolve_path(note2.path) end

@@ -1,22 +1,29 @@
-local my_utils = require("my.obsidian.utils")
+local MyObsidianUtils = require("my.obsidian.utils")
 
 local M = {}
-local H = {}
 
 ---@class my.obsidian.Vault: my.obsidian.VaultOpts
 local Vault = {}
 
+---@param opts my.obsidian.VaultOpts
+---@return my.obsidian.Vault
+function M.new(opts)
+  local self = setmetatable(vim.tbl_extend("force", {}, opts), { __index = Vault })
+  self.root = MyObsidianUtils.resolve_path(self.root) or ""
+  return self
+end
+
+---@return boolean
 function Vault:exists()
   local stat = vim.uv.fs_stat(self.root)
   return stat and stat.type == "directory" or false
 end
 
-function Vault:get_workspace_spec()
-  ---@type obsidian.workspace.WorkspaceSpec
+---@return obsidian.workspace.WorkspaceSpec
+function Vault:resolve_workspace_spec()
   return {
     name = self.name,
     path = self.root,
-    ---@diagnostic disable-next-line: missing-fields
     overrides = {
       daily_notes = {
         folder = self.daily_notes_folder,
@@ -25,34 +32,25 @@ function Vault:get_workspace_spec()
         template = "daily-note",
       },
       attachments = { folder = self.attachments_folder },
+      templates = { folder = self.templates_folder },
+      new_notes_location = "notes_subdir",
+      notes_subdir = tostring(self.fleeting_notes_folder),
+      note_id_func = function(...) return string.format("%s-%s", os.time(), require("obsidian.builtin").title_id(...)) end,
       frontmatter = {
-        enabled = function(p) return require("obsidian.path").new(self.fleeting_notes_folder):is_parent_of(p) end,
-        func = function(n)
-          local builtin = require("obsidian.builtin").frontmatter(n)
-          return vim.tbl_deep_extend("force", {}, self.frontmatter_defaults(n), builtin, self.frontmatter_overrides(n))
-        end,
+        enabled = function(path) return require("obsidian.path").new(self.fleeting_notes_folder):is_parent_of(path) end,
+        func = function(note) return self:resolve_frontmatter(note) end,
         sort = self.frontmatter_sort,
       },
-      note_id_func = H.note_id_func,
-      ---@type obsidian.config.TemplateOpts|{}
-      templates = { folder = self.templates_folder },
-      notes_subdir = tostring(self.fleeting_notes_folder),
-      new_notes_location = "notes_subdir",
     },
   }
 end
 
----@param opts my.obsidian.VaultOpts
-function M.new(opts)
-  ---@type my.obsidian.Vault
-  local self = setmetatable(vim.tbl_extend("force", {}, opts), { __index = Vault })
-  self.root = my_utils.resolve_path(self.root) or ""
-  return self
+---@param note obsidian.Note
+---@return table<string, any>
+function Vault:resolve_frontmatter(note)
+  local as_before = require("obsidian.builtin").frontmatter(note)
+  return vim.tbl_deep_extend("force", self.frontmatter_defaults(note), as_before, self.frontmatter_overrides(note))
 end
-
-function H.note_id_func(...) return string.format("%s-%s", os.time(), require("obsidian.builtin").title_id(...)) end
-
-function H.plugin_frontmatter(note) return require("obsidian.builtin").frontmatter(note) end
 
 ---@class my.obsidian.VaultOpts
 ---@field name string

@@ -1,4 +1,4 @@
-local my_utils = require("my.obsidian.utils")
+local MyObsidianUtils = require("my.obsidian.utils")
 
 local H = {}
 local M = {}
@@ -15,7 +15,7 @@ end
 ---@param bufnr? integer
 function Bookmark:toggle_buffer(bufnr)
   local buf_note = require("obsidian.api").current_note(bufnr)
-  if buf_note and self.note and my_utils.is_equal(buf_note, self.note) then
+  if buf_note and self.note and MyObsidianUtils.is_equal(buf_note, self.note) then
     self.note = nil
   else
     self.note = buf_note

@@ -1,13 +1,13 @@
-local my_bookmarks = require("my.obsidian.bookmarks")
-local my_links = require("my.obsidian.links")
-local my_vaults = require("my.obsidian.vaults")
+local MyObsidianBookmarks = require("my.obsidian.bookmarks")
+local MyObsidianLinks = require("my.obsidian.links")
+local MyObsidianVaults = require("my.obsidian.vaults")
 
 local H = {} -- HELPERS
 
-local BOOKMARK = my_bookmarks.new()
+local BOOKMARK = MyObsidianBookmarks.new()
 
-local VAULT = my_vaults.new({
-  name = "My Vault",
+local VAULT = MyObsidianVaults.new({
+  name = "my-vault",
   root = "~/Vault",
   daily_notes_folder = "01-journal/01-daily",
   fleeting_notes_folder = "02-fleeting",
@@ -23,11 +23,11 @@ local OPTS = {
   PICKER = { dst = { note = "picker" } },
   BROADER = { insert_opts = { section = { header = "Broader" } } },
   NARROWER = { insert_opts = { section = { header = "Narrower" } } },
-  RECENT_FILTER = { filter = { cwd = tostring(VAULT.root) } },
+  RECENT_NOTES = { filter = { cwd = tostring(VAULT.root) } },
 }
 
 function H.now() return os.date("%Y-%m-%d %H:%M") end
-function H.write_xref_links(...) my_links.insert_cross_references(vim.tbl_deep_extend("error", {}, ...)) end
+function H.write_xref_links(...) MyObsidianLinks.insert_cross_references(vim.tbl_deep_extend("error", {}, ...)) end
 function H.make_narrower_note() H.write_xref_links(OPTS.CREATE, { src = OPTS.NARROWER, dst = OPTS.BROADER }) end
 function H.make_broader_note() H.write_xref_links(OPTS.CREATE, { src = OPTS.BROADER, dst = OPTS.NARROWER }) end
 function H.pick_narrower_note() H.write_xref_links(OPTS.PICKER, { src = OPTS.NARROWER, dst = OPTS.BROADER }) end
@@ -43,7 +43,7 @@ return {
     lazy = false,
     enabled = VAULT:exists(),
     opts = {
-      workspaces = { VAULT:get_workspace_spec() },
+      workspaces = { VAULT:resolve_workspace_spec() },
       -- See: |render-markdown-info-obsidian.nvim|
       ui = { enable = false },
       -- TODO: Delete after 4.0.0 release
@@ -51,7 +51,7 @@ return {
     },
     init = function()
       vim.api.nvim_create_autocmd("User", {
-        group = vim.api.nvim_create_augroup("my.adapters.obsidian.ObsidianKeymaps", { clear = true }),
+        group = vim.api.nvim_create_augroup("my.additions.obsidian.ObsidianKeymaps", { clear = true }),
         pattern = "ObsidianNoteEnter",
         callback = function(args)
           local buf = args.buf
@@ -72,11 +72,7 @@ return {
       { "<leader>vt", function() require("obsidian.daily").today():open() end, desc = "Daily Note" },
       { "<leader>vv", function() BOOKMARK:open_or_pick() end, desc = "Open Bookmark" },
       { "<leader>va", function() BOOKMARK:append_text() end, desc = "Append To Bookmark" },
-      {
-        "<leader>vr",
-        function() pcall(require("snacks.picker").recent, OPTS.RECENT_FILTER) end,
-        desc = "Recent Notes",
-      },
+      { "<leader>vr", function() pcall(require("snacks.picker").recent, OPTS.RECENT_NOTES) end, desc = "Recent Notes" },
     },
   },
 }
