@@ -8,8 +8,8 @@ local M = {}
 local Bookmark = {}
 
 function Bookmark:open_or_pick()
-  local picker = require("obsidian.picker")
-  return H.ensure_open(self.note) or picker.find_notes({ callback = function(p) self.note = H.ensure_open(p) end })
+  return H.ensure_open(self.note)
+    or require("obsidian.picker").find_notes({ callback = function(p) self.note = H.ensure_open(p) end })
 end
 
 ---@param bufnr? integer
