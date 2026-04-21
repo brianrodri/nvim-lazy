@@ -17,20 +17,6 @@ function M.resolve_path(path)
   return C.CACHE[path]
 end
 
---- Discard history of `CTRL-T` jumps from the |tagstack|, then add a new `CTRL-]` entry to become the most-recent jump.
----
----@param current_location [number, number, number, number] as if returned by |getpos|: `[bufnum, lnum, col, off]`.
----@param destination? obsidian.Note The note we're jumping into.
----@param winnum? integer The window where the jump will occur. Defaults to `0` (the current window).
-function M.rewrite_most_recent_jump_history(current_location, destination, winnum)
-  if not current_location or not destination then return end
-  winnum = winnum or 0
-  if winnum < 0 then return end
-  local bufnum = current_location[1] or -1
-  if bufnum < 0 then return end
-  vim.fn.settagstack(winnum, { items = { { tagname = vim.fn.expand("<cword>"), from = current_location } } }, "t")
-end
-
 ---@type table<string, string>
 C.CACHE = {}
 
