@@ -5,9 +5,12 @@ local M = {}
 ---@field note? obsidian.Note
 local Bookmark = {}
 
+---@return my.obsidian.Bookmark
+function M.new() return setmetatable({}, { __index = Bookmark }) end
+
 function Bookmark:open_or_pick()
-  return H.ensure_open(self.note)
-    or require("obsidian.picker").find_notes({ callback = function(p) self.note = H.ensure_open(p) end })
+  if H.ensure_open(self.note) then return end
+  require("obsidian.picker").find_notes({ callback = function(path) self.note = H.ensure_open(path) end })
 end
 
 ---@param bufnr? integer
@@ -37,8 +40,5 @@ function H.ensure_open(val)
   if ok and picked then picked:open() end
   return ok and picked or nil
 end
-
----@return my.obsidian.Bookmark
-function M.new() return setmetatable({}, { __index = Bookmark }) end
 
 return M
