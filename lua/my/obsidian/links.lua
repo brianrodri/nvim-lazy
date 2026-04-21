@@ -70,16 +70,11 @@ C.DEFAULT_LINK_OPTS = {
   },
 }
 
----@alias my.obsidian.links.ResolveStrategy
----| "create"
----| "unique"
----| "picker"
----| integer
----| obsidian.Note
+---@alias my.obsidian.links.ResolveStrategy "create" | "unique" | "picker" | integer | obsidian.Note
 
 ---@class my.obsidian.links.NoteOpts
----@field note? my.obsidian.links.ResolveStrategy|{}
----@field insert_opts? obsidian.note.InsertTextOpts|{}
+---@field note my.obsidian.links.ResolveStrategy
+---@field insert_opts obsidian.note.InsertTextOpts|{}
 
 ---@class my.obsidian.links.LinkOpts
 ---@field src? my.obsidian.links.NoteOpts|{}
