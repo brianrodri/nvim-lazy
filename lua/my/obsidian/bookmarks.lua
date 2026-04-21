@@ -36,7 +36,7 @@ function H.ensure_open(val)
   if not val then return nil end
   if type(val) ~= "string" then val = tostring(val.path) end
   local ok, picked = pcall(require("obsidian.note").from_file, val)
-  if ok and picked then picked:open({ sync = true }) end
+  if ok and picked then picked:open() end
   return ok and picked or nil
 end
 
