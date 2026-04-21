@@ -17,12 +17,12 @@ function M.resolve_path(path)
   return C.CACHE[path]
 end
 
---- Truncates the history of `CTRL-T` jumps currently in the |tagstack| and replaces with a new `CTRL-]` jump.
+--- Discard history of `CTRL-T` jumps from the |tagstack|, then add a new `CTRL-]` entry to become the most-recent jump.
 ---
 ---@param current_location [number, number, number, number] as if returned by |getpos|: `[bufnum, lnum, col, off]`.
 ---@param destination? obsidian.Note The note we're jumping into.
 ---@param winnum? integer The window where the jump will occur. Defaults to `0` (the current window).
-function M.push_tagstack_truncating_jump_from_note(current_location, destination, winnum)
+function M.rewrite_most_recent_jump_history(current_location, destination, winnum)
   if not current_location or not destination then return end
   winnum = winnum or 0
   if winnum < 0 then return end

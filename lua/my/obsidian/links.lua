@@ -13,11 +13,7 @@ function M.insert_cross_references(opts)
       if not rev_note or MyObsidianUtils.is_equal(fwd_note, rev_note) then return end
       local fwd_link_pos = H.insert_link(fwd_note, rev_note, opts.src.insert_opts)
       local rev_link_pos = H.insert_link(rev_note, fwd_note, opts.dst.insert_opts)
-
-      -- As if I pressed `CTRL-]` on the newly-created link to navigate into the destination note.
-      MyObsidianUtils.push_tagstack_truncating_jump_from_note(fwd_link_pos, rev_note)
-
-      -- When I press `CTRL-T` after navigating to the destination, then the cursor will return to aforementioned link.
+      MyObsidianUtils.rewrite_most_recent_jump_history(fwd_link_pos, rev_note)
       vim.schedule(function() rev_note:open({ sync = true, line = rev_link_pos[2], col = rev_link_pos[3] }) end)
     end)
   end)
