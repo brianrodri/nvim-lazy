@@ -1,5 +1,3 @@
-local MyObsidianUtils = require("my.obsidian.utils")
-
 local M = {}
 local H = {}
 local C = {}
@@ -13,7 +11,7 @@ function M.insert_cross_references(opts)
   H.resolve_note(opts.src.note, function(fwd_note)
     if not fwd_note then return end
     H.resolve_note(opts.dst.note, function(rev_note)
-      if not rev_note or MyObsidianUtils.is_equal(fwd_note, rev_note) then return end
+      if not rev_note or fwd_note.path:resolve() == rev_note.path:resolve() then return end
       fwd_note:insert_text(C.REFERENCE_LINK_FORMAT_STR:format(rev_note:format_link()), opts.src.insert_opts)
       rev_note:insert_text(C.REFERENCE_LINK_FORMAT_STR:format(fwd_note:format_link()), opts.dst.insert_opts)
       vim.fn.settagstack(0, { items = { { tagname = vim.fn.expand("<cword>"), from = vim.fn.getpos(".") } } }, "t")

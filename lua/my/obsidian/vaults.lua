@@ -1,5 +1,3 @@
-local MyObsidianUtils = require("my.obsidian.utils")
-
 local M = {}
 
 ---@class my.obsidian.Vault: my.obsidian.VaultOpts
@@ -9,7 +7,7 @@ local Vault = {}
 ---@return my.obsidian.Vault
 function M.new(opts)
   local self = setmetatable(vim.tbl_extend("force", {}, opts), { __index = Vault })
-  self.root = MyObsidianUtils.resolve_path(self.root) or ""
+  self.root = vim.fs.normalize(self.root) or ""
   return self
 end
 
