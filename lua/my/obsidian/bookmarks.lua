@@ -28,7 +28,7 @@ function Bookmark:append_text()
   local ok, input = pcall(require("obsidian.api").input, "Append:")
   local text = vim.trim(ok and input or "")
   if text == "" then return end
-  self.note:write({ update_content = function(lines) return vim.list_extend(lines, { text }) end })
+  self.note:insert_text(text, { section = nil, placement = "top" })
 end
 
 ---@param val? obsidian.Note|string
