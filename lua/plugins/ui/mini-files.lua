@@ -22,6 +22,24 @@ return {
   {
     "nvim-mini/mini.files",
     opts = {
+      content = {
+        sort = function(fs_entries)
+          local index_lookup = {}
+          for i, entry in ipairs(require("mini.files").default_sort(fs_entries)) do
+            index_lookup[entry.path] = i
+          end
+          table.sort(fs_entries, function(left, right)
+            local left_ext = vim.fs.ext(left.name)
+            local right_ext = vim.fs.ext(right.name)
+            if left_ext == "" and right_ext ~= "" then return true end
+            if left_ext ~= "" and right_ext == "" then return false end
+            if left_ext < right_ext then return true end
+            if left_ext > right_ext then return false end
+            return index_lookup[left.path] < index_lookup[right.path]
+          end)
+          return fs_entries
+        end,
+      },
       mappings = { go_in = "", go_out = "", reset = "<esc>" },
       windows = { preview = true, width_preview = 80 },
     },
