@@ -38,7 +38,6 @@ function H.pick_broader_note() H.write_xref_links(OPTS.PICKER, { src = OPTS.BROA
 return {
   {
     "obsidian-nvim/obsidian.nvim",
-    commit = "d6c0e5bc30937df0657c9953d135d0ebb3af7e00",
     dependencies = { "nvim-lua/plenary.nvim", "folke/which-key.nvim", "folke/snacks.nvim" },
     lazy = false,
     enabled = VAULT:exists(),
