@@ -3,8 +3,11 @@
 return {
   {
     "stevearc/conform.nvim",
-    lazy = false,
-    -- NOTE: Ensures that the formatter runs with the correct CWD to find the correct config file.
-    opts = { formatters = { mdformat = { cwd = require("conform.util").root_file({ ".mdformat.toml" }) } } },
+    commit = "619363c",
+    opts = {
+      formatters = {
+        mdformat = { cwd = require("conform.util").root_file({ ".mdformat.toml" }) },
+      },
+    },
   },
 }
