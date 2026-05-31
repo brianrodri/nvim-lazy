@@ -8,6 +8,7 @@ return {
       formatters = {
         mdformat = { cwd = require("conform.util").root_file({ ".mdformat.toml" }) },
       },
+      formatters_by_ft = { typescript = { "oxfmt" }, javascript = { "oxfmt" }, typescriptreact = { "oxfmt" } },
     },
   },
 }
