@@ -31,7 +31,6 @@ require("lazy").setup({
 
     -- import/override with your plugins
     { import = "plugins.integ" },
-    { import = "plugins.test" },
     { import = "plugins.ui" },
     { import = "plugins.workarounds" },
   },
