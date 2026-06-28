@@ -18,28 +18,30 @@ local function open_in_split(split_direction)
   mini_files.go_in({ close_on_file = true })
 end
 
+local function sort_by_ext(entries)
+  local idx_tbl = {}
+  for i, entry in ipairs(require("mini.files").default_sort(entries)) do
+    idx_tbl[entry.path] = i
+  end
+  table.sort(entries, function(lhs, rhs)
+    if lhs.fs_type == rhs.fs_type then
+      local lhs_dot = vim.startswith(lhs.name, ".")
+      local rhs_dot = vim.startswith(rhs.name, ".")
+      if lhs_dot ~= rhs_dot then return rhs_dot end
+      local lhs_ext = vim.fs.ext(lhs.name)
+      local rhs_ext = vim.fs.ext(rhs.name)
+      if lhs_ext ~= rhs_ext then return lhs_ext < rhs_ext end
+    end
+    return idx_tbl[lhs.path] < idx_tbl[rhs.path]
+  end)
+  return entries
+end
+
 return {
   {
     "nvim-mini/mini.files",
     opts = {
-      content = {
-        sort = function(fs_entries)
-          local index_lookup = {}
-          for i, entry in ipairs(require("mini.files").default_sort(fs_entries)) do
-            index_lookup[entry.path] = i
-          end
-          table.sort(fs_entries, function(left, right)
-            local left_ext = vim.fs.ext(left.name)
-            local right_ext = vim.fs.ext(right.name)
-            if left_ext == "" and right_ext ~= "" then return true end
-            if left_ext ~= "" and right_ext == "" then return false end
-            if left_ext < right_ext then return true end
-            if left_ext > right_ext then return false end
-            return index_lookup[left.path] < index_lookup[right.path]
-          end)
-          return fs_entries
-        end,
-      },
+      content = { sort = sort_by_ext },
       mappings = { go_in = "", go_out = "", reset = "<esc>" },
       windows = { preview = true, width_preview = 80 },
     },
@@ -58,14 +60,6 @@ return {
           map("<C-k>", function() open_in_split("aboveleft horizontal") end, "Open To Top")
           map("<C-h>", function() open_in_split("aboveleft vertical") end, "Open To Left")
         end,
-      })
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "MiniFilesActionRename",
-        callback = function(event) require("snacks").rename.on_rename_file(event.data.from, event.data.to) end,
-      })
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "MiniFilesActionDelete",
-        callback = function(event) require("snacks").bufdelete.delete({ file = event.data.from, force = true }) end,
       })
     end,
   },
