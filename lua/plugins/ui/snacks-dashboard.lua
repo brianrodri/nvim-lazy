@@ -7,43 +7,12 @@ return {
     ---@type snacks.Config
     opts = {
       dashboard = {
-        enabled = true,
         sections = {
           { section = "header" },
           { section = "startup" },
-
-          { pane = 2, icon = "󰌌 ", section = "keys", indent = 2, padding = 1 },
-
-          {
-            pane = 2,
-            icon = "󱋡 ",
-            title = "Recent Files",
-            section = "recent_files",
-            cwd = true,
-            indent = 2,
-            padding = 1,
-          },
-
-          {
-            pane = 2,
-            icon = " ",
-            title = "Recent Projects",
-            section = "projects",
-            indent = 2,
-            padding = 1,
-          },
-
-          {
-            pane = 2,
-            icon = " ",
-            title = "Git Status",
-            section = "terminal",
-            enabled = function() return require("snacks.git").get_root() ~= nil end,
-            cmd = "git --no-pager diff --stat -B -M -C --find-copies-harder",
-            ttl = 5 * 60,
-            indent = 1,
-            padding = 1,
-          },
+          { section = "keys", icon = "󰌌 ", indent = 2, padding = 1 },
+          { section = "recent_files", icon = "󱋡 ", indent = 2, padding = 1, title = "Recent Files", cwd = true },
+          { section = "projects", icon = " ", indent = 2, padding = 1, title = "Recent Projects" },
         },
         preset = {
           header = [[
@@ -71,17 +40,15 @@ return {
 ⠀⠀⠀⠀⠀⠈⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣏⠀⠀⠀⢀⣴⡿⠋⠀⠀⠀⠸⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠙⢿⣿⣿⣿⣿⣷⣶⣶⣿⠟⠁⠀⠀⠀⠀⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠻⠿⠿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀]],
-          -- stylua: ignore
-          -- luacheck: no max line length
           keys = {
-            { icon = " ", key = ".", desc = "Resume Session",                         section = "session" },
-            { icon = "󰝒 ", key = "n", desc = "New File",        action = ":enew"                           },
-            { icon = "󰱼 ", key = "f", desc = "Find File",       action = "<leader>ff"                      },
-            { icon = "󱎸 ", key = "s", desc = "Search Text",     action = "<leader>sg"                      },
-            { icon = " ", key = "v", desc = "Open Daily Note", action = "<leader>vt"                      },
-            { icon = " ", key = "g", desc = "Lazygit",         action = "<leader>gg"                      },
-            { icon = "󰒲 ", key = "l", desc = "Lazy",            action = "<leader>ll"                      },
-            { icon = " ", key = "q", desc = "Quit",            action = "<leader>qq"                      },
+            { icon = " ", key = ".", desc = "Resume Session", section = "session" },
+            { icon = "󰝒 ", key = "n", desc = "New File", action = ":enew" },
+            { icon = "󰱼 ", key = "f", desc = "Find File", action = "<leader>ff" },
+            { icon = "󱎸 ", key = "s", desc = "Search Text", action = "<leader>sg" },
+            { icon = " ", key = "v", desc = "Open Daily Note", action = "<leader>vt" },
+            { icon = " ", key = "g", desc = "Lazygit", action = "<leader>gg" },
+            { icon = "󰒲 ", key = "l", desc = "Lazy", action = "<leader>ll" },
+            { icon = " ", key = "q", desc = "Quit", action = "<leader>qq" },
           },
         },
       },
