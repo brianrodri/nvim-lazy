@@ -27,7 +27,7 @@ local function sort_by_ext(entries)
     if lhs.fs_type == rhs.fs_type then
       local lhs_dot = vim.startswith(lhs.name, ".")
       local rhs_dot = vim.startswith(rhs.name, ".")
-      if lhs_dot ~= rhs_dot then return rhs_dot end
+      if lhs_dot ~= rhs_dot then return lhs_dot end
       local lhs_ext = vim.fs.ext(lhs.name)
       local rhs_ext = vim.fs.ext(rhs.name)
       if lhs_ext ~= rhs_ext then return lhs_ext < rhs_ext end
